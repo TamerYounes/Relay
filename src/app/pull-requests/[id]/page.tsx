@@ -1,7 +1,15 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { buttonStyles } from "@/components/button-styles";
+import { ChangedFilesPanel } from "@/components/changed-files-panel";
+import { FindingsList } from "@/components/findings-list";
+import { PullRequestIcon } from "@/components/pull-request-icon";
+import { RelativeTime } from "@/components/relative-time";
+import { ReviewSummary } from "@/components/review-summary";
 import { RunReviewButton } from "@/components/run-review-button";
+import { getReviewStatus, pluralize } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { decryptToken } from "@/lib/github/encryption";
 
@@ -154,7 +162,7 @@ async function getPullRequest(id: string) {
 
   const { data: review } = await supabase
     .from("reviews")
-    .select("id, status")
+    .select("id, status, completed_at, commit_sha")
     .eq("repository_id", repository.id)
     .eq("github_pr_number", pullRequest.number)
     .maybeSingle();
@@ -180,22 +188,6 @@ async function getPullRequest(id: string) {
     review,
     findings,
   };
-}
-
-function severityClasses(severity: ReviewFinding["severity"]) {
-  switch (severity) {
-    case "critical":
-      return "border-red-200 bg-red-50 text-red-700";
-
-    case "high":
-      return "border-orange-200 bg-orange-50 text-orange-700";
-
-    case "medium":
-      return "border-yellow-200 bg-yellow-50 text-yellow-700";
-
-    case "low":
-      return "border-zinc-200 bg-zinc-50 text-zinc-600";
-  }
 }
 
 export async function generateMetadata(
@@ -235,258 +227,195 @@ export default async function PullRequestDetailPage(
     findings,
   } = result;
 
+  const reviewStatus = getReviewStatus(review?.status, findings);
+
+  const findingsByFile = new Map<string, number>();
+  for (const finding of findings) {
+    findingsByFile.set(
+      finding.file_path,
+      (findingsByFile.get(finding.file_path) ?? 0) + 1,
+    );
+  }
+
   return (
     <AppShell>
       <main className="space-y-6">
-        <nav aria-label="Breadcrumb">
+        <nav
+          aria-label="Breadcrumb"
+          className="flex min-w-0 items-center gap-1.5 font-mono text-xs text-zinc-500"
+        >
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-500 transition-colors hover:text-zinc-950"
+            className="shrink-0 font-medium transition-colors hover:text-zinc-950"
           >
-            <span aria-hidden="true">←</span>
             Pull requests
           </Link>
+          <span aria-hidden="true" className="text-zinc-300">
+            /
+          </span>
+          <span className="truncate font-mono">{repository.full_name}</span>
+          <span aria-hidden="true" className="text-zinc-300">
+            /
+          </span>
+          <span className="shrink-0 font-mono text-zinc-700">
+            #{pullRequest.number}
+          </span>
         </nav>
 
-        <header className="rounded-lg border border-zinc-200 bg-white p-5 md:p-6">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-500">
-            <span className="font-mono">
-              {repository.full_name}
-            </span>
-
-            <span aria-hidden="true">/</span>
-
-            <span className="font-mono">
-              #{pullRequest.number}
-            </span>
-
-            {pullRequest.draft && (
-              <>
-                <span aria-hidden="true">·</span>
-
-                <span className="rounded border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500">
-                  Draft
+        <header className="border-b border-zinc-300 pb-5">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0">
+              <h1 className="wrap-break-word text-[22px] font-semibold leading-tight tracking-[-0.02em] text-zinc-950 sm:text-[26px]">
+                {pullRequest.title}{" "}
+                <span className="font-mono text-[0.8em] font-normal text-zinc-400">
+                  #{pullRequest.number}
                 </span>
-              </>
-            )}
-          </div>
+              </h1>
 
-          <h1 className="mt-3 max-w-4xl text-2xl font-semibold tracking-tight text-zinc-950">
-            {pullRequest.title}
-          </h1>
+              <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-2 text-[13px] text-zinc-500">
+                <span
+                  className={`inline-flex h-6 items-center gap-1.5 rounded-xs border px-2 font-mono text-[11px] font-semibold uppercase tracking-wide ${
+                    pullRequest.draft
+                      ? "border-zinc-300 bg-zinc-100 text-zinc-600"
+                      : "border-emerald-700 bg-emerald-700 text-white [&_svg]:text-white"
+                  }`}
+                >
+                  <PullRequestIcon
+                    draft={pullRequest.draft}
+                    className="h-3.5 w-3.5"
+                  />
+                  {pullRequest.draft ? "Draft" : "Open"}
+                </span>
 
-          {pullRequest.body && (
-            <p className="mt-3 max-w-3xl whitespace-pre-wrap text-sm leading-6 text-zinc-500">
-              {pullRequest.body}
-            </p>
-          )}
+                <span className="inline-flex items-center gap-1.5">
+                  {pullRequest.user?.avatar_url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={pullRequest.user.avatar_url}
+                      alt=""
+                      width={18}
+                      height={18}
+                      className="h-4.5 w-4.5 rounded-xs"
+                    />
+                  )}
+                  <span className="font-medium text-zinc-800">
+                    {pullRequest.user?.login ?? "Unknown"}
+                  </span>
+                </span>
 
-          <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-zinc-100 pt-4 text-xs text-zinc-500">
-            <span>
-              Opened by {pullRequest.user?.login ?? "Unknown"}
-            </span>
+                <span>wants to merge into</span>
 
-            <span className="hidden text-zinc-300 sm:inline">
-              ·
-            </span>
+                <span className="inline-flex min-w-0 items-center gap-1 font-mono text-xs">
+                  <span className="max-w-40 truncate rounded-xs border border-zinc-300 bg-white px-1.5 py-0.5 text-zinc-800">
+                    {pullRequest.base?.ref}
+                  </span>
+                  <span aria-hidden="true" className="text-zinc-400">
+                    ←
+                  </span>
+                  <span className="max-w-56 truncate rounded-xs border border-zinc-300 bg-white px-1.5 py-0.5 text-zinc-800">
+                    {pullRequest.head?.ref}
+                  </span>
+                </span>
+              </div>
+            </div>
 
-            <span className="font-mono">
-              {pullRequest.head?.ref} → {pullRequest.base?.ref}
-            </span>
+            <div className="flex shrink-0 flex-wrap items-center gap-2">
+              <a
+                href={pullRequest.html_url}
+                target="_blank"
+                rel="noreferrer"
+                className={buttonStyles.secondary}
+              >
+                Open on GitHub
+                <span aria-hidden="true" className="text-zinc-400">
+                  ↗
+                </span>
+              </a>
 
-            <span className="hidden text-zinc-300 sm:inline">
-              ·
-            </span>
-
-            <span>
-              {pullRequest.additions} additions
-            </span>
-
-            <span>
-              {pullRequest.deletions} deletions
-            </span>
-
-            <span>
-              {pullRequest.changed_files} files
-            </span>
-          </div>
-
-          <div className="mt-5 flex flex-wrap items-center gap-3">
-            <RunReviewButton
-              prNumber={pullRequest.number}
-              hasReview={review?.status === "completed"}
-            />
-
-            <a
-              href={pullRequest.html_url}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex rounded-md border border-zinc-200 px-3 py-2 text-xs font-medium text-zinc-700 transition-colors hover:bg-zinc-50"
-            >
-              Open on GitHub
-            </a>
+              <RunReviewButton
+                prNumber={pullRequest.number}
+                hasReview={review?.status === "completed"}
+              />
+            </div>
           </div>
         </header>
 
-        {review?.status === "completed" && (
-          <section className="rounded-lg border border-zinc-200 bg-white">
-            <div className="border-b border-zinc-200 px-5 py-4">
-              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="text-sm font-semibold text-zinc-900">
-                    Review findings
-                  </h2>
-
-                  <p className="mt-1 text-xs text-zinc-500">
-                    Relay found {findings.length}{" "}
-                    {findings.length === 1
-                      ? "potential issue"
-                      : "potential issues"}{" "}
-                    in this pull request.
-                  </p>
-                </div>
-
-                <span className="text-xs font-medium text-zinc-500">
-                  {findings.length} findings
-                </span>
-              </div>
-            </div>
-
-            {findings.length === 0 ? (
-              <div className="px-5 py-10">
-                <p className="text-sm font-medium text-zinc-900">
-                  No issues found
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_17rem]">
+          <div className="min-w-0 space-y-6">
+            {pullRequest.body && (
+              <section className="overflow-hidden rounded border border-zinc-200 bg-white">
+                <h2 className="eyebrow border-b border-zinc-200 bg-zinc-50 px-4 py-2.5 text-zinc-500 sm:px-5">
+                  Description
+                </h2>
+                <p className="max-h-80 overflow-y-auto whitespace-pre-wrap wrap-break-word px-4 py-3 text-[13px] leading-6 text-zinc-700 sm:px-5">
+                  {pullRequest.body}
                 </p>
-
-                <p className="mt-1 text-xs text-zinc-500">
-                  Relay did not detect any issues in the changed
-                  code.
-                </p>
-              </div>
-            ) : (
-              <div className="divide-y divide-zinc-100">
-                {findings.map((finding) => (
-                  <article key={finding.id} className="px-5 py-5">
-                    <div className="flex flex-col gap-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span
-                          className={`rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${severityClasses(
-                            finding.severity,
-                          )}`}
-                        >
-                          {finding.severity}
-                        </span>
-
-                        <span className="text-[11px] font-medium text-zinc-400">
-                          {finding.category}
-                        </span>
-                      </div>
-
-                      <div>
-                        <h3 className="text-sm font-semibold text-zinc-900">
-                          {finding.title}
-                        </h3>
-
-                        <p className="mt-1 text-xs text-zinc-400">
-                          <span className="font-mono">
-                            {finding.file_path}
-                          </span>
-
-                          {finding.line !== null && (
-                            <span>:{finding.line}</span>
-                          )}
-                        </p>
-                      </div>
-
-                      <p className="max-w-3xl text-sm leading-6 text-zinc-600">
-                        {finding.explanation}
-                      </p>
-
-                      {finding.suggestion && (
-                        <div className="rounded-md border border-zinc-200 bg-zinc-50 px-4 py-3">
-                          <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
-                            Suggested fix
-                          </p>
-
-                          <p className="mt-1 text-xs leading-5 text-zinc-600">
-                            {finding.suggestion}
-                          </p>
-                        </div>
-                      )}
-
-                      {finding.code_snippet && (
-                        <pre className="overflow-x-auto rounded-md border border-zinc-200 bg-zinc-950 p-3 text-[11px] leading-5 text-zinc-200">
-                          {finding.code_snippet}
-                        </pre>
-                      )}
-                    </div>
-                  </article>
-                ))}
-              </div>
+              </section>
             )}
-          </section>
-        )}
 
-        <section className="rounded-lg border border-zinc-200 bg-white">
-          <div className="border-b border-zinc-200 px-5 py-4">
-            <h2 className="text-sm font-semibold text-zinc-900">
-              Changed files
-            </h2>
+            <FindingsList findings={findings} status={reviewStatus} />
 
-            <p className="mt-1 text-xs text-zinc-500">
-              {files.length}{" "}
-              {files.length === 1 ? "file" : "files"} changed in
-              this pull request
-            </p>
+            <ChangedFilesPanel files={files} findingsByFile={findingsByFile} />
           </div>
 
-          {files.length === 0 ? (
-            <div className="px-5 py-8">
-              <p className="text-sm text-zinc-500">
-                No changed files were returned by GitHub.
-              </p>
-            </div>
-          ) : (
-            <div className="divide-y divide-zinc-100">
-              {files.map((file) => (
-                <div key={file.filename} className="px-5 py-4">
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                    <p className="min-w-0 truncate font-mono text-xs text-zinc-800">
-                      {file.filename}
-                    </p>
+          <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+            <ReviewSummary
+              status={reviewStatus}
+              findings={findings}
+              completedAt={review?.completed_at}
+              commitSha={review?.commit_sha}
+            />
 
-                    <div className="flex shrink-0 items-center gap-3 text-xs">
-                      <span className="text-emerald-600">
-                        +{file.additions}
-                      </span>
+            <section className="overflow-hidden rounded border border-zinc-200 bg-white">
+              <h2 className="eyebrow border-b border-zinc-200 bg-zinc-50 px-4 py-2.5 text-zinc-500">
+                Details
+              </h2>
 
-                      <span className="text-red-500">
-                        -{file.deletions}
-                      </span>
-
-                      <span className="rounded border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 text-[10px] text-zinc-500">
-                        {file.status}
-                      </span>
-                    </div>
-                  </div>
-
-                  {file.patch && (
-                    <details className="mt-3">
-                      <summary className="cursor-pointer text-xs text-zinc-400 hover:text-zinc-700">
-                        View diff
-                      </summary>
-
-                      <pre className="mt-3 max-h-96 overflow-auto rounded-md border border-zinc-200 bg-zinc-50 p-4 text-[11px] leading-5 text-zinc-700">
-                        {file.patch}
-                      </pre>
-                    </details>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+              <dl className="divide-y divide-zinc-100 text-[13px]">
+                <DetailRow label="Author">
+                  {pullRequest.user?.login ?? "Unknown"}
+                </DetailRow>
+                <DetailRow label="Opened">
+                  <RelativeTime value={pullRequest.created_at} />
+                </DetailRow>
+                <DetailRow label="Updated">
+                  <RelativeTime value={pullRequest.updated_at} />
+                </DetailRow>
+                <DetailRow label="Files">
+                  {pluralize(pullRequest.changed_files, "file")}
+                </DetailRow>
+                <DetailRow label="Changes">
+                  <span className="font-mono text-xs tabular-nums">
+                    <span className="text-emerald-600">
+                      +{pullRequest.additions}
+                    </span>{" "}
+                    <span className="text-red-600">
+                      −{pullRequest.deletions}
+                    </span>
+                  </span>
+                </DetailRow>
+              </dl>
+            </section>
+          </aside>
+        </div>
       </main>
     </AppShell>
+  );
+}
+
+function DetailRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 px-4 py-2">
+      <dt className="text-[13px] text-zinc-500">{label}</dt>
+      <dd className="min-w-0 truncate text-right font-mono text-xs text-zinc-800">
+        {children}
+      </dd>
+    </div>
   );
 }

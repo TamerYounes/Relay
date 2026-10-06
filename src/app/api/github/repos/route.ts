@@ -22,16 +22,41 @@ export async function GET() {
     .eq("user_id", user.id)
     .maybeSingle();
 
-  if (connectionError || !connection) {
+  if (connectionError) {
+    console.error("GitHub connection lookup failed:", connectionError);
+
+    return NextResponse.json(
+      { error: connectionError.message },
+      { status: 500 },
+    );
+  }
+
+  if (!connection) {
     return NextResponse.json(
       { error: "GitHub is not connected." },
       { status: 400 },
     );
   }
 
-  try {
-    const token = decryptToken(connection.access_token_encrypted);
+  let token: string;
 
+  try {
+    token = decryptToken(connection.access_token_encrypted);
+  } catch (error) {
+    console.error("GitHub token decryption failed:", error);
+
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to decrypt GitHub connection.",
+      },
+      { status: 500 },
+    );
+  }
+
+  try {
     const response = await fetch(
       "https://api.github.com/user/repos?per_page=100&sort=updated",
       {
@@ -40,12 +65,19 @@ export async function GET() {
           Accept: "application/vnd.github+json",
           "X-GitHub-Api-Version": "2022-11-28",
         },
+        cache: "no-store",
       },
     );
 
     if (!response.ok) {
+      const message = await response.text();
+
+      console.error("GitHub repository request failed:", message);
+
       return NextResponse.json(
-        { error: "Failed to fetch GitHub repositories." },
+        {
+          error: `GitHub API error: ${response.status}`,
+        },
         { status: response.status },
       );
     }
@@ -72,10 +104,15 @@ export async function GET() {
       ),
     );
   } catch (error) {
-    console.error("GitHub repository error:", error);
+    console.error("GitHub repository fetch failed:", error);
 
     return NextResponse.json(
-      { error: "Failed to access GitHub." },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to access GitHub.",
+      },
       { status: 500 },
     );
   }

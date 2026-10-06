@@ -1,11 +1,15 @@
-import type { FindingCategory, ReviewStatus, Severity } from "@/types/relay";
+import type { ReviewFinding, ReviewStatus, Severity } from "@/types/relay";
+
+export const severityOrder: Severity[] = ["critical", "high", "medium", "low"];
 
 export function formatStatus(status: ReviewStatus) {
   const labels: Record<ReviewStatus, string> = {
+    not_reviewed: "Not reviewed",
+    running: "Reviewing",
+    failed: "Review failed",
+    clean: "Clean",
     reviewed: "Reviewed",
     needs_attention: "Needs attention",
-    clean: "Clean",
-    failed: "Review failed",
   };
 
   return labels[status];
@@ -17,33 +21,87 @@ export function formatSeverity(severity: Severity) {
     high: "High",
     medium: "Medium",
     low: "Low",
-    info: "Info",
   };
 
   return labels[severity];
 }
 
-export function formatCategory(category: FindingCategory) {
-  const labels: Record<FindingCategory, string> = {
-    bug: "Bug",
-    security: "Security",
-    code_quality: "Code quality",
-    maintainability: "Maintainability",
-    test_coverage: "Test coverage",
-  };
-
-  return labels[category];
+export function compareSeverity(a: Severity, b: Severity) {
+  return severityOrder.indexOf(a) - severityOrder.indexOf(b);
 }
 
-export function formatReviewedAt(value: string) {
+export function getHighestSeverity(
+  findings: Pick<ReviewFinding, "severity">[],
+): Severity | null {
+  return (
+    severityOrder.find((severity) =>
+      findings.some((finding) => finding.severity === severity),
+    ) ?? null
+  );
+}
+
+/**
+ * Maps a stored review status and its findings to the status shown in the UI.
+ */
+export function getReviewStatus(
+  storedStatus: string | null | undefined,
+  findings: Pick<ReviewFinding, "severity">[],
+): ReviewStatus {
+  if (storedStatus === "running") return "running";
+  if (storedStatus === "failed") return "failed";
+  if (storedStatus !== "completed") return "not_reviewed";
+  if (findings.length === 0) return "clean";
+
+  return findings.some(
+    (finding) =>
+      finding.severity === "critical" || finding.severity === "high",
+  )
+    ? "needs_attention"
+    : "reviewed";
+}
+
+export function formatDateTime(value: string) {
   return new Intl.DateTimeFormat("en", {
     month: "short",
     day: "numeric",
+    year: "numeric",
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(value));
 }
 
-export function getTotalChanges(additions: number, deletions: number) {
-  return additions + deletions;
+const relativeUnits: [Intl.RelativeTimeFormatUnit, number][] = [
+  ["year", 60 * 60 * 24 * 365],
+  ["month", 60 * 60 * 24 * 30],
+  ["week", 60 * 60 * 24 * 7],
+  ["day", 60 * 60 * 24],
+  ["hour", 60 * 60],
+  ["minute", 60],
+];
+
+export function formatRelativeTime(value: string, now = Date.now()) {
+  const seconds = Math.round((new Date(value).getTime() - now) / 1000);
+
+  if (Math.abs(seconds) < 60) {
+    return "just now";
+  }
+
+  const formatter = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+
+  for (const [unit, unitSeconds] of relativeUnits) {
+    if (Math.abs(seconds) >= unitSeconds) {
+      return formatter.format(Math.round(seconds / unitSeconds), unit);
+    }
+  }
+
+  return "just now";
+}
+
+export function pluralize(count: number, singular: string, plural?: string) {
+  return `${count} ${count === 1 ? singular : (plural ?? `${singular}s`)}`;
+}
+
+/** Stable DOM id for a changed file, so findings can link to it. */
+export function fileAnchorId(path: string) {
+  return `file-${path.replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
 }

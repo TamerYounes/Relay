@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { buttonStyles } from "./button-styles";
 
 export function RunReviewButton({
   prNumber,
@@ -11,10 +12,12 @@ export function RunReviewButton({
 }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [failed, setFailed] = useState(false);
 
   async function runReview() {
     setLoading(true);
     setMessage("");
+    setFailed(false);
 
     try {
       const response = await fetch("/api/reviews", {
@@ -43,6 +46,7 @@ export function RunReviewButton({
 
       window.location.reload();
     } catch (error) {
+      setFailed(true);
       setMessage(
         error instanceof Error
           ? error.message
@@ -54,25 +58,36 @@ export function RunReviewButton({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-wrap items-center gap-2">
+      {message && (
+        <span
+          role={failed ? "alert" : "status"}
+          className={`order-last w-full text-xs sm:order-first sm:w-auto ${
+            failed ? "text-red-600" : "text-zinc-500"
+          }`}
+        >
+          {message}
+        </span>
+      )}
+
       <button
         type="button"
         onClick={runReview}
         disabled={loading || hasReview}
-        className="inline-flex items-center rounded-md bg-zinc-900 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+        className={buttonStyles.primary}
       >
+        {loading && (
+          <span
+            aria-hidden="true"
+            className="h-3 w-3 animate-spin rounded-full border-[1.5px] border-white/40 border-t-white"
+          />
+        )}
         {loading
           ? "Reviewing..."
           : hasReview
             ? "Reviewed"
             : "Run review"}
       </button>
-
-      {message && (
-        <span className="text-xs text-zinc-500">
-          {message}
-        </span>
-      )}
     </div>
   );
 }

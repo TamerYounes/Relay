@@ -1,49 +1,62 @@
-export type ReviewStatus = "reviewed" | "needs_attention" | "clean" | "failed";
+export type Severity = "critical" | "high" | "medium" | "low";
 
-export type Severity = "critical" | "high" | "medium" | "low" | "info";
+/**
+ * Review state for a pull request as shown in the UI. Derived from the
+ * `reviews.status` column plus the findings attached to a completed review.
+ */
+export type ReviewStatus =
+  | "not_reviewed"
+  | "running"
+  | "failed"
+  | "clean"
+  | "reviewed"
+  | "needs_attention";
 
-export type FindingCategory =
-  | "bug"
-  | "security"
-  | "code_quality"
-  | "maintainability"
-  | "test_coverage";
-
-export type ChangedFile = {
-  path: string;
-  language: string;
-  additions: number;
-  deletions: number;
-  status: "modified" | "added" | "deleted";
-  findings: number;
+export type GitHubUser = {
+  login: string;
+  avatar_url?: string;
 };
 
-export type Finding = {
-  id: string;
-  category: FindingCategory;
-  severity: Severity;
-  title: string;
-  filePath: string;
-  line: number;
-  confidence: "high" | "medium" | "low";
-  explanation: string;
-  suggestion: string;
-  codeSnippet: string;
-};
-
-export type PullRequest = {
-  id: string;
+export type GitHubPullRequest = {
+  id: number;
   number: number;
   title: string;
-  repository: string;
-  author: string;
-  sourceBranch: string;
-  targetBranch: string;
-  status: ReviewStatus;
+  html_url: string;
+  draft: boolean;
+  user?: GitHubUser;
+  head?: {
+    ref: string;
+  };
+  base?: {
+    ref: string;
+  };
+  created_at: string;
+  updated_at: string;
+};
+
+export type GitHubFile = {
+  filename: string;
+  status: string;
+  additions: number;
+  deletions: number;
+  changes: number;
+  patch?: string;
+};
+
+export type ReviewFinding = {
+  id: string;
   severity: Severity;
-  reviewedAt: string;
-  reviewDuration: string;
-  summary: string;
-  files: ChangedFile[];
-  findings: Finding[];
+  category: string;
+  title: string;
+  file_path: string;
+  line: number | null;
+  explanation: string;
+  suggestion: string | null;
+  code_snippet: string | null;
+};
+
+export type PullRequestReview = {
+  status: ReviewStatus;
+  findingsCount: number;
+  highestSeverity: Severity | null;
 };

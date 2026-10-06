@@ -1,41 +1,59 @@
-export function DashboardHeader() {
-  return (
-    <section className="flex flex-col gap-5 border-b border-zinc-200 pb-6 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <div className="mb-3 flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-[#3b4fd8]" />
-          <p className="text-xs font-semibold uppercase tracking-wide text-[#3b4fd8]">
-            Overview
-          </p>
-        </div>
+import Link from "next/link";
+import { buttonStyles } from "./button-styles";
 
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-950">
+type DashboardHeaderProps = {
+  repository?: {
+    full_name: string;
+    default_branch?: string | null;
+  } | null;
+};
+
+export function DashboardHeader({ repository }: DashboardHeaderProps) {
+  const [owner, name] = repository?.full_name.split("/") ?? [];
+
+  return (
+    <header className="flex flex-col gap-4 border-b border-zinc-300 pb-5 sm:flex-row sm:items-end sm:justify-between">
+      <div className="min-w-0">
+        {repository ? (
+          <p className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-zinc-500">
+            <span className="truncate">
+              {owner} <span className="text-zinc-300">/</span>{" "}
+              <span className="font-medium text-zinc-900">{name}</span>
+            </span>
+            {repository.default_branch && (
+              <span className="rounded-xs border border-zinc-300 bg-white px-1.5 text-[11px] leading-4.5 text-zinc-600">
+                {repository.default_branch}
+              </span>
+            )}
+          </p>
+        ) : (
+          <p className="eyebrow text-zinc-400">No repository</p>
+        )}
+
+        <h1 className="mt-1.5 text-[26px] font-semibold leading-tight tracking-[-0.02em] text-zinc-950">
           Pull requests
         </h1>
-
-        <p className="mt-1.5 text-sm text-zinc-500">
-          Review activity across your repositories.
-        </p>
       </div>
 
-      <div className="flex items-center gap-2">
-        <div className="rounded-md border border-zinc-200 bg-white px-3 py-2 text-left">
-          <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-400">
-            Repository
-          </p>
+      {repository && (
+        <div className="flex shrink-0 items-center gap-2">
+          <Link href="/settings" className={buttonStyles.secondary}>
+            Change repository
+          </Link>
 
-          <p className="mt-0.5 font-mono text-xs font-medium text-zinc-800">
-            acme / production
-          </p>
+          <a
+            href={`https://github.com/${repository.full_name}/pulls`}
+            target="_blank"
+            rel="noreferrer"
+            className={buttonStyles.secondary}
+          >
+            GitHub
+            <span aria-hidden="true" className="text-zinc-400">
+              ↗
+            </span>
+          </a>
         </div>
-
-        <button
-          type="button"
-          className="h-10.5 rounded-md border border-zinc-200 bg-white px-3 text-xs font-medium text-zinc-700 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
-        >
-          Filter
-        </button>
-      </div>
-    </section>
+      )}
+    </header>
   );
 }

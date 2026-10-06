@@ -1,87 +1,108 @@
-import type { PullRequest } from "@/types/relay";
-import { SeverityBadge } from "./severity-badge";
+import { formatSeverity, severityOrder } from "@/lib/format";
+import type { ReviewFinding, ReviewStatus } from "@/types/relay";
+import { RelativeTime } from "./relative-time";
+import { severityStyles } from "./severity-badge";
 import { StatusBadge } from "./status-badge";
 
 export function ReviewSummary({
-  pullRequest,
+  status,
+  findings,
+  completedAt,
+  commitSha,
 }: {
-  pullRequest: PullRequest;
+  status: ReviewStatus;
+  findings: Pick<ReviewFinding, "severity">[];
+  completedAt?: string | null;
+  commitSha?: string | null;
 }) {
-  const criticalCount = pullRequest.findings.filter(
-    (finding) => finding.severity === "critical",
-  ).length;
+  const completed =
+    status === "clean" || status === "reviewed" || status === "needs_attention";
 
-  const highCount = pullRequest.findings.filter(
-    (finding) => finding.severity === "high",
-  ).length;
-
-  const mediumCount = pullRequest.findings.filter(
-    (finding) => finding.severity === "medium",
-  ).length;
-
-  const lowCount = pullRequest.findings.filter(
-    (finding) => finding.severity === "low",
-  ).length;
+  const counts = severityOrder.map((severity) => ({
+    severity,
+    count: findings.filter((finding) => finding.severity === severity).length,
+  }));
 
   return (
-    <section className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
-      <div className="flex flex-col gap-4 border-b border-zinc-200 px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-400">
-            Review result
-          </p>
+    <section className="overflow-hidden rounded border border-zinc-200 bg-white">
+      <div className="flex items-center justify-between gap-3 border-b border-zinc-200 bg-zinc-50 px-4 py-2.5">
+        <h2 className="eyebrow text-zinc-500">Review</h2>
+        <StatusBadge status={status} />
+      </div>
 
-          <div className="mt-2 flex items-center gap-2">
-            <StatusBadge status={pullRequest.status} />
-            <SeverityBadge severity={pullRequest.severity} />
+      {completed ? (
+        <>
+          <div className="px-4 pb-1 pt-4">
+            <p className="font-mono text-[28px] font-medium leading-none tabular-nums text-zinc-950">
+              {findings.length}
+            </p>
+            <p className="mt-1 text-xs text-zinc-500">
+              {findings.length === 1 ? "finding" : "findings"}
+            </p>
+
+            {findings.length > 0 && (
+              <div aria-hidden="true" className="mt-3 flex h-1.5 gap-px overflow-hidden">
+                {counts
+                  .filter(({ count }) => count > 0)
+                  .map(({ severity, count }) => (
+                    <span
+                      key={severity}
+                      className={severityStyles[severity].bar}
+                      style={{ flexGrow: count }}
+                    />
+                  ))}
+              </div>
+            )}
           </div>
-        </div>
 
-        <div className="text-left sm:text-right">
-          <p className="text-xs text-zinc-400">Review duration</p>
-          <p className="mt-1 font-mono text-sm font-semibold text-zinc-900">
-            {pullRequest.reviewDuration}
-          </p>
-        </div>
-      </div>
+          <dl className="mt-2 border-t border-zinc-100">
+            {counts.map(({ severity, count }) => (
+              <div
+                key={severity}
+                className="flex items-center justify-between px-4 py-1.5"
+              >
+                <dt className="flex items-center gap-2 text-[13px] text-zinc-600">
+                  <span
+                    aria-hidden="true"
+                    className={`h-2 w-2 ${severityStyles[severity].bar}`}
+                  />
+                  {formatSeverity(severity)}
+                </dt>
+                <dd
+                  className={`font-mono text-[13px] font-medium tabular-nums ${
+                    count > 0 ? severityStyles[severity].text : "text-zinc-300"
+                  }`}
+                >
+                  {count}
+                </dd>
+              </div>
+            ))}
+          </dl>
 
-      <div className="grid sm:grid-cols-4">
-        <div className="border-b border-zinc-200 px-5 py-4 sm:border-b-0 sm:border-r">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
-            Critical
-          </p>
-          <p className="mt-2 font-mono text-xl font-semibold text-red-600">
-            {criticalCount}
-          </p>
-        </div>
-
-        <div className="border-b border-zinc-200 px-5 py-4 sm:border-b-0 sm:border-r">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
-            High
-          </p>
-          <p className="mt-2 font-mono text-xl font-semibold text-orange-600">
-            {highCount}
-          </p>
-        </div>
-
-        <div className="border-b border-zinc-200 px-5 py-4 sm:border-b-0 sm:border-r">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
-            Medium
-          </p>
-          <p className="mt-2 font-mono text-xl font-semibold text-amber-600">
-            {mediumCount}
-          </p>
-        </div>
-
-        <div className="px-5 py-4">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
-            Low
-          </p>
-          <p className="mt-2 font-mono text-xl font-semibold text-zinc-600">
-            {lowCount}
-          </p>
-        </div>
-      </div>
+          {(completedAt || commitSha) && (
+            <div className="mt-1 space-y-0.5 border-t border-zinc-200 bg-zinc-50 px-4 py-2.5 font-mono text-[11px] text-zinc-500">
+              {completedAt && (
+                <p>
+                  reviewed <RelativeTime value={completedAt} />
+                </p>
+              )}
+              {commitSha && (
+                <p>
+                  at <span className="text-zinc-800">{commitSha.slice(0, 7)}</span>
+                </p>
+              )}
+            </div>
+          )}
+        </>
+      ) : (
+        <p className="px-4 py-3.5 text-[13px] leading-5 text-zinc-600">
+          {status === "running"
+            ? "A review is currently running."
+            : status === "failed"
+              ? "The last review didn't complete."
+              : "This pull request hasn't been reviewed by Relay yet."}
+        </p>
+      )}
     </section>
   );
 }

@@ -1,27 +1,18 @@
+import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
+import { buttonStyles } from "@/components/button-styles";
 import { DashboardHeader } from "@/components/dashboard-header";
+import { EmptyState } from "@/components/empty-state";
 import { MetricCard } from "@/components/metric-card";
+import { PullRequestList } from "@/components/pr-list";
 import { createClient } from "@/lib/supabase/server";
 import { decryptToken } from "@/lib/github/encryption";
-
-type GitHubPullRequest = {
-  id: number;
-  number: number;
-  title: string;
-  html_url: string;
-  draft: boolean;
-  user?: {
-    login: string;
-  };
-  head?: {
-    ref: string;
-  };
-  base?: {
-    ref: string;
-  };
-  created_at: string;
-  updated_at: string;
-};
+import { getHighestSeverity, getReviewStatus, pluralize } from "@/lib/format";
+import type {
+  GitHubPullRequest,
+  PullRequestReview,
+  Severity,
+} from "@/types/relay";
 
 export default async function Home() {
   const supabase = await createClient();
@@ -45,11 +36,19 @@ export default async function Home() {
   if (!workspace) {
     return (
       <AppShell>
-        <div className="rounded-lg border border-zinc-200 bg-white px-6 py-10">
-          <p className="text-sm font-medium text-zinc-900">
-            No workspace found
-          </p>
-        </div>
+        <main className="space-y-6">
+          <DashboardHeader />
+
+          <EmptyState
+            title="No workspace found"
+            description="Relay couldn't find a workspace for your account. Open Settings to check your workspace."
+            action={
+              <Link href="/settings" className={buttonStyles.primary}>
+                Open settings
+              </Link>
+            }
+          />
+        </main>
       </AppShell>
     );
   }
@@ -57,15 +56,19 @@ export default async function Home() {
   if (!workspace.selected_repository_id) {
     return (
       <AppShell>
-        <div className="rounded-lg border border-zinc-200 bg-white px-6 py-10">
-          <p className="text-sm font-medium text-zinc-900">
-            No repository connected
-          </p>
+        <main className="space-y-6">
+          <DashboardHeader />
 
-          <p className="mt-1 text-xs text-zinc-500">
-            Select a GitHub repository in Settings to get started.
-          </p>
-        </div>
+          <EmptyState
+            title="No repository selected"
+            description="Choose a GitHub repository to start reviewing its pull requests."
+            action={
+              <Link href="/settings" className={buttonStyles.primary}>
+                Choose repository
+              </Link>
+            }
+          />
+        </main>
       </AppShell>
     );
   }
@@ -79,15 +82,19 @@ export default async function Home() {
   if (!repository) {
     return (
       <AppShell>
-        <div className="rounded-lg border border-zinc-200 bg-white px-6 py-10">
-          <p className="text-sm font-medium text-zinc-900">
-            Repository not found
-          </p>
+        <main className="space-y-6">
+          <DashboardHeader />
 
-          <p className="mt-1 text-xs text-zinc-500">
-            Select a different repository in Settings.
-          </p>
-        </div>
+          <EmptyState
+            title="Repository not found"
+            description="The selected repository is no longer available. Choose a different repository in Settings."
+            action={
+              <Link href="/settings" className={buttonStyles.primary}>
+                Choose repository
+              </Link>
+            }
+          />
+        </main>
       </AppShell>
     );
   }
@@ -101,20 +108,25 @@ export default async function Home() {
   if (!connection) {
     return (
       <AppShell>
-        <div className="rounded-lg border border-zinc-200 bg-white px-6 py-10">
-          <p className="text-sm font-medium text-zinc-900">
-            GitHub is not connected
-          </p>
+        <main className="space-y-6">
+          <DashboardHeader />
 
-          <p className="mt-1 text-xs text-zinc-500">
-            Connect your GitHub account in Settings to view pull requests.
-          </p>
-        </div>
+          <EmptyState
+            title="GitHub is not connected"
+            description="Connect your GitHub account to load pull requests for this repository."
+            action={
+              <Link href="/settings" className={buttonStyles.primary}>
+                Connect GitHub
+              </Link>
+            }
+          />
+        </main>
       </AppShell>
     );
   }
 
   let pullRequests: GitHubPullRequest[] = [];
+  let githubStatus: number | null = null;
 
   try {
     const token = decryptToken(connection.access_token_encrypted);
@@ -136,149 +148,205 @@ export default async function Home() {
     );
 
     if (!response.ok) {
-      throw new Error("Failed to fetch pull requests from GitHub.");
+      githubStatus = response.status;
+      const errorBody = await response.text();
+
+      throw new Error(
+        `GitHub API ${response.status} ${response.statusText}: ${errorBody}`,
+      );
     }
 
     pullRequests = await response.json();
   } catch (error) {
-    console.error("Failed to load GitHub pull requests:", error);
+    console.error(
+      "Failed to load GitHub pull requests:",
+      error instanceof Error ? error.message : String(error),
+    );
+
+    // GitHub returns 401 "Bad credentials" when the stored OAuth token has
+    // been revoked. Reconnecting stores a fresh token.
+    if (githubStatus === 401) {
+      return (
+        <AppShell>
+          <main className="space-y-6">
+            <DashboardHeader repository={repository} />
+
+            <EmptyState
+              tone="danger"
+              title="Your GitHub connection is no longer valid"
+              description="GitHub rejected the saved access token. It may have been revoked or the Relay authorization removed. Reconnect GitHub to continue."
+              action={
+                <>
+                  <a href="/auth/github" className={buttonStyles.primary}>
+                    Reconnect GitHub
+                  </a>
+                  <Link href="/settings" className={buttonStyles.secondary}>
+                    Open settings
+                  </Link>
+                </>
+              }
+            />
+          </main>
+        </AppShell>
+      );
+    }
 
     return (
       <AppShell>
-        <main className="space-y-8">
-          <DashboardHeader />
+        <main className="space-y-6">
+          <DashboardHeader repository={repository} />
 
-          <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4">
-            <p className="text-sm font-medium text-red-800">
-              Couldn't load pull requests from GitHub.
-            </p>
-
-            <p className="mt-1 text-xs text-red-600">
-              Check that your GitHub connection is still active.
-            </p>
-          </div>
+          <EmptyState
+            tone="danger"
+            title="Couldn't load pull requests from GitHub"
+            description={
+              <>
+                <p>Check that your GitHub connection is still active.</p>
+                {error instanceof Error && (
+                  <p className="mt-2 wrap-break-word font-mono text-[11px] text-red-600">
+                    {error.message}
+                  </p>
+                )}
+              </>
+            }
+            action={
+              <>
+                <Link href="/" className={buttonStyles.secondary}>
+                  Try again
+                </Link>
+                <Link href="/settings" className={buttonStyles.secondary}>
+                  Open settings
+                </Link>
+              </>
+            }
+          />
         </main>
       </AppShell>
     );
   }
 
+  const reviews = await getReviewsByPullRequest(
+    supabase,
+    repository.id,
+    new Set(pullRequests.map((pullRequest) => pullRequest.number)),
+  );
+
+  const openReviews = [...reviews.values()];
+  const reviewedCount = openReviews.filter(
+    (review) =>
+      review.status !== "not_reviewed" &&
+      review.status !== "running" &&
+      review.status !== "failed",
+  ).length;
+  const attentionCount = openReviews.filter(
+    (review) => review.status === "needs_attention",
+  ).length;
+  const securityCount = openReviews.reduce(
+    (total, review) => total + review.securityFindingsCount,
+    0,
+  );
+
   return (
     <AppShell>
-      <main className="space-y-8">
-        <DashboardHeader />
+      <main className="space-y-6">
+        <DashboardHeader repository={repository} />
 
         <section
           aria-label="Review metrics"
-          className="grid overflow-hidden rounded-lg border border-zinc-200 bg-white sm:grid-cols-2 lg:grid-cols-4"
+          className="grid grid-cols-2 gap-px overflow-hidden rounded border border-zinc-200 bg-zinc-200 lg:grid-cols-4"
         >
           <MetricCard
             label="Open PRs"
             value={String(pullRequests.length)}
-            detail={`Open pull requests in ${repository.full_name}`}
+            detail={`In ${repository.full_name}`}
           />
 
           <MetricCard
-            label="Reviewed PRs"
-            value="0"
-            detail="Completed Relay reviews"
+            label="Reviewed"
+            value={String(reviewedCount)}
+            meter={{ value: reviewedCount, max: pullRequests.length }}
+            detail={
+              pullRequests.length > 0
+                ? `${pullRequests.length - reviewedCount} awaiting review`
+                : "No open pull requests"
+            }
           />
 
           <MetricCard
             label="Needs attention"
-            value="0"
-            detail="Open follow-up required"
+            value={String(attentionCount)}
+            detail="High or critical findings"
+            tone={attentionCount > 0 ? "warning" : "neutral"}
           />
 
           <MetricCard
             label="Security findings"
-            value="0"
-            detail="Detected by Relay"
+            value={String(securityCount)}
+            detail={`Across ${pluralize(reviewedCount, "reviewed PR")}`}
+            tone={securityCount > 0 ? "danger" : "neutral"}
           />
         </section>
 
-        <section aria-label="Pull requests">
-          <div className="mb-4">
-            <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">
-              Pull requests
-            </p>
-
-            <p className="mt-1 text-sm text-zinc-500">
-              Open pull requests from{" "}
-              <span className="font-mono text-zinc-700">
-                {repository.full_name}
-              </span>
-            </p>
-          </div>
-
-          {pullRequests.length === 0 ? (
-            <div className="rounded-lg border border-zinc-200 bg-white px-6 py-12 text-center">
-              <p className="text-sm font-medium text-zinc-900">
-                No open pull requests
-              </p>
-
-              <p className="mt-1 text-xs text-zinc-500">
-                This repository currently has no open pull requests.
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
-              {pullRequests.map((pullRequest, index) => (
-                <a
-                  key={pullRequest.id}
-                  href={`/pull-requests/${pullRequest.number}`}
-                  className={`block px-5 py-4 transition-colors hover:bg-zinc-50 ${
-                    index !== pullRequests.length - 1
-                      ? "border-b border-zinc-100"
-                      : ""
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-5">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs text-zinc-400">
-                          #{pullRequest.number}
-                        </span>
-
-                        {pullRequest.draft && (
-                          <span className="rounded border border-zinc-200 bg-zinc-50 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500">
-                            Draft
-                          </span>
-                        )}
-                      </div>
-
-                      <h2 className="mt-1 truncate text-sm font-medium text-zinc-900">
-                        {pullRequest.title}
-                      </h2>
-
-                      <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-400">
-                        <span>
-                          {pullRequest.user?.login ?? "Unknown"}
-                        </span>
-
-                        <span>·</span>
-
-                        <span className="font-mono">
-                          {pullRequest.head?.ref ?? ""}
-                        </span>
-
-                        <span>→</span>
-
-                        <span className="font-mono">
-                          {pullRequest.base?.ref ?? ""}
-                        </span>
-                      </div>
-                    </div>
-
-                    <span className="shrink-0 text-xs text-zinc-400">
-                      View details →
-                    </span>
-                  </div>
-                </a>
-              ))}
-            </div>
-          )}
-        </section>
+        <PullRequestList pullRequests={pullRequests} reviews={reviews} />
       </main>
     </AppShell>
   );
+}
+
+type ReviewWithSecurity = PullRequestReview & {
+  securityFindingsCount: number;
+};
+
+/**
+ * Loads Relay review state for the given open pull requests. Failures are
+ * non-fatal: the list still renders, just without review information.
+ */
+async function getReviewsByPullRequest(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  repositoryId: string,
+  pullRequestNumbers: Set<number>,
+) {
+  const reviewsByNumber = new Map<number, ReviewWithSecurity>();
+
+  if (pullRequestNumbers.size === 0) {
+    return reviewsByNumber;
+  }
+
+  const { data: reviewRows, error: reviewsError } = await supabase
+    .from("reviews")
+    .select("id, status, github_pr_number")
+    .eq("repository_id", repositoryId)
+    .in("github_pr_number", [...pullRequestNumbers]);
+
+  if (reviewsError || !reviewRows || reviewRows.length === 0) {
+    return reviewsByNumber;
+  }
+
+  const { data: findingRows } = await supabase
+    .from("review_findings")
+    .select("review_id, severity, category")
+    .in(
+      "review_id",
+      reviewRows.map((review) => review.id),
+    );
+
+  for (const review of reviewRows) {
+    const findings = (findingRows ?? []).filter(
+      (finding) => finding.review_id === review.id,
+    ) as { severity: Severity; category: string | null }[];
+    const completed = review.status === "completed";
+
+    reviewsByNumber.set(review.github_pr_number, {
+      status: getReviewStatus(review.status, findings),
+      findingsCount: completed ? findings.length : 0,
+      highestSeverity: completed ? getHighestSeverity(findings) : null,
+      securityFindingsCount: completed
+        ? findings.filter(
+            (finding) => finding.category?.toLowerCase() === "security",
+          ).length
+        : 0,
+    });
+  }
+
+  return reviewsByNumber;
 }

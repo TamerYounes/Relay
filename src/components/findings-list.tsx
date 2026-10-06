@@ -1,85 +1,83 @@
-import type { Finding } from "@/types/relay";
-import { SeverityBadge } from "./severity-badge";
+import { compareSeverity, pluralize } from "@/lib/format";
+import type { ReviewFinding, ReviewStatus } from "@/types/relay";
+import { EmptyState } from "./empty-state";
+import { FindingCard } from "./finding-card";
+import { Count, Panel } from "./panel";
 
-export function FindingsList({ findings }: { findings: Finding[] }) {
+export function FindingsList({
+  findings,
+  status,
+}: {
+  findings: ReviewFinding[];
+  status: ReviewStatus;
+}) {
+  const completed =
+    status === "clean" || status === "reviewed" || status === "needs_attention";
+
+  const sortedFindings = [...findings].sort((a, b) =>
+    compareSeverity(a.severity, b.severity),
+  );
+
   return (
-    <section className="overflow-hidden rounded-lg border border-zinc-200 bg-white">
-      <div className="border-b border-zinc-200 px-5 py-4">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-sm font-semibold text-zinc-950">
-              Review findings
-            </h2>
+    <Panel
+      id="findings"
+      title={
+        <>
+          Review findings
+          {completed && <Count value={findings.length} />}
+        </>
+      }
+      description={
+        completed
+          ? findings.length > 0
+            ? `${pluralize(findings.length, "potential issue")}, most severe first.`
+            : "Relay reviewed the changed code."
+          : "Issues Relay detects in the changed code."
+      }
+    >
+      {status === "not_reviewed" && (
+        <EmptyState
+          bare
+          label="Not reviewed"
+          title="No review yet"
+          description="Run a review to check the changed code for bugs, security issues and maintainability problems."
+        />
+      )}
 
-            <p className="mt-1 text-xs text-zinc-500">
-              Issues identified during the review
-            </p>
-          </div>
+      {status === "running" && (
+        <EmptyState
+          bare
+          label="In progress"
+          title="Review in progress"
+          description="Relay is analyzing this pull request. Refresh the page in a moment to see the results."
+        />
+      )}
 
-          <span className="font-mono text-xs text-zinc-400">
-            {findings.length}
-          </span>
-        </div>
-      </div>
+      {status === "failed" && (
+        <EmptyState
+          bare
+          tone="danger"
+          title="Review failed"
+          description="Relay couldn't finish reviewing this pull request. Try running the review again."
+        />
+      )}
 
-      {findings.length === 0 ? (
-        <div className="px-5 py-12 text-center">
-          <p className="text-sm font-medium text-zinc-800">
-            No findings
-          </p>
+      {completed && findings.length === 0 && (
+        <EmptyState
+          bare
+          label="Clean"
+          title="No issues found"
+          description="Relay didn't detect any issues in the changed code."
+        />
+      )}
 
-          <p className="mt-1 text-xs text-zinc-500">
-            No issues were identified in this review.
-          </p>
-        </div>
-      ) : (
+      {completed && findings.length > 0 && (
         <div className="divide-y divide-zinc-200">
-          {findings.map((finding, index) => (
-            <article
-              key={finding.id ?? `${finding.filePath}-${finding.line}-${index}`}
-              className="p-5"
-            >
-              <div className="flex flex-wrap items-center gap-2">
-                <SeverityBadge severity={finding.severity} />
-
-                <span className="font-mono text-[11px] text-zinc-400">
-                  {finding.filePath}:{finding.line}
-                </span>
-
-                <span className="rounded-md bg-zinc-100 px-1.5 py-0.5 text-[10px] font-medium text-zinc-500">
-                  {finding.category.replace("_", " ")}
-                </span>
-              </div>
-
-              <h3 className="mt-3 text-sm font-semibold text-zinc-950">
-                {finding.title}
-              </h3>
-
-              <p className="mt-2 text-sm leading-6 text-zinc-500">
-                {finding.explanation}
-              </p>
-
-              {finding.codeSnippet && (
-                <pre className="mt-4 overflow-x-auto rounded-md border border-zinc-200 bg-zinc-950 p-4 font-mono text-xs leading-6 text-zinc-200">
-                  <code>{finding.codeSnippet}</code>
-                </pre>
-              )}
-
-              {finding.suggestion && (
-                <div className="mt-4 border-l-2 border-zinc-200 pl-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-400">
-                    Suggestion
-                  </p>
-
-                  <p className="mt-1 text-xs leading-5 text-zinc-600">
-                    {finding.suggestion}
-                  </p>
-                </div>
-              )}
-            </article>
+          {sortedFindings.map((finding) => (
+            <FindingCard key={finding.id} finding={finding} linkToFile />
           ))}
         </div>
       )}
-    </section>
+    </Panel>
   );
 }

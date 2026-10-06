@@ -82,71 +82,94 @@ export async function GET() {
 
   try {
     token = decryptToken(connection.access_token_encrypted);
-  } catch {
+  } catch (error) {
+    console.error("GitHub token decryption failed:", error);
+
     return NextResponse.json(
-      { error: "Unable to decrypt GitHub connection." },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unable to decrypt GitHub connection.",
+      },
       { status: 500 },
     );
   }
 
-  const githubResponse = await fetch(
-    `https://api.github.com/repos/${repository.full_name}/pulls?state=open&per_page=50`,
-    {
-      headers: {
-        Accept: "application/vnd.github+json",
-        Authorization: `Bearer ${token}`,
-        "X-GitHub-Api-Version": "2022-11-28",
+  try {
+    const githubResponse = await fetch(
+      `https://api.github.com/repos/${repository.full_name}/pulls?state=open&per_page=50`,
+      {
+        headers: {
+          Accept: "application/vnd.github+json",
+          Authorization: `Bearer ${token}`,
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+        cache: "no-store",
       },
-      cache: "no-store",
-    },
-  );
+    );
 
-  if (!githubResponse.ok) {
-    const message = await githubResponse.text();
+    if (!githubResponse.ok) {
+      const message = await githubResponse.text();
 
-    console.error("GitHub pull request request failed:", message);
+      console.error("GitHub pull request request failed:", message);
+
+      return NextResponse.json(
+        {
+          error: `GitHub API error: ${githubResponse.status}`,
+        },
+        { status: githubResponse.status },
+      );
+    }
+
+    const pullRequests = await githubResponse.json();
+
+    return NextResponse.json({
+      repository,
+      pullRequests: pullRequests.map(
+        (pullRequest: {
+          number: number;
+          title: string;
+          state: string;
+          draft: boolean;
+          html_url: string;
+          user?: { login?: string };
+          created_at: string;
+          updated_at: string;
+          head?: { sha?: string; ref?: string };
+          base?: { ref?: string };
+          additions?: number;
+          deletions?: number;
+          changed_files?: number;
+        }) => ({
+          number: pullRequest.number,
+          title: pullRequest.title,
+          state: pullRequest.state,
+          draft: pullRequest.draft,
+          url: pullRequest.html_url,
+          author: pullRequest.user?.login ?? "Unknown",
+          createdAt: pullRequest.created_at,
+          updatedAt: pullRequest.updated_at,
+          headSha: pullRequest.head?.sha ?? null,
+          headBranch: pullRequest.head?.ref ?? null,
+          baseBranch: pullRequest.base?.ref ?? null,
+          additions: pullRequest.additions ?? 0,
+          deletions: pullRequest.deletions ?? 0,
+          changedFiles: pullRequest.changed_files ?? 0,
+        }),
+      ),
+    });
+  } catch (error) {
+    console.error("GitHub pull request fetch failed:", error);
 
     return NextResponse.json(
-      { error: "Failed to load GitHub pull requests." },
-      { status: githubResponse.status },
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch pull requests from GitHub.",
+      },
+      { status: 500 },
     );
   }
-
-  const pullRequests = await githubResponse.json();
-
-  return NextResponse.json({
-    repository,
-    pullRequests: pullRequests.map(
-      (pullRequest: {
-        number: number;
-        title: string;
-        state: string;
-        draft: boolean;
-        html_url: string;
-        user?: { login?: string };
-        created_at: string;
-        updated_at: string;
-        head?: { sha?: string; ref?: string };
-        base?: { ref?: string };
-        additions?: number;
-        deletions?: number;
-        changed_files?: number;
-      }) => ({
-        number: pullRequest.number,
-        title: pullRequest.title,
-        state: pullRequest.state,
-        draft: pullRequest.draft,
-        url: pullRequest.html_url,
-        author: pullRequest.user?.login ?? "Unknown",
-        createdAt: pullRequest.created_at,
-        updatedAt: pullRequest.updated_at,
-        headSha: pullRequest.head?.sha ?? null,
-        headBranch: pullRequest.head?.ref ?? null,
-        baseBranch: pullRequest.base?.ref ?? null,
-        additions: pullRequest.additions ?? 0,
-        deletions: pullRequest.deletions ?? 0,
-        changedFiles: pullRequest.changed_files ?? 0,
-      }),
-    ),
-  });
 }

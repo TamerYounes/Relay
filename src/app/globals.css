@@ -1,25 +1,77 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f7f8fa;
-  --foreground: #18181b;
+  --background: #f2f1ec;
+  --foreground: #1a1917;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
-  --font-sans: var(--font-inter);
-  --font-mono: var(--font-mono);
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, "SFMono-Regular", monospace;
+}
+
+@theme {
+  /*
+   * Warm graphite neutrals. Overriding zinc re-tints every neutral in the app
+   * at once, so components keep using the standard zinc-* utilities.
+   */
+  --color-zinc-50: #f9f8f5;
+  --color-zinc-100: #f0eee9;
+  --color-zinc-200: #e2dfd7;
+  --color-zinc-300: #cdc9bf;
+  --color-zinc-400: #a19d93;
+  --color-zinc-500: #77736a;
+  --color-zinc-600: #5b5851;
+  --color-zinc-700: #44423d;
+  --color-zinc-800: #2c2b28;
+  --color-zinc-900: #1c1b19;
+  --color-zinc-950: #131311;
+
+  /* Sidebar / chrome */
+  --color-ink: #161614;
+  --color-ink-raised: #201f1c;
+  --color-ink-line: #2f2e2a;
+  --color-ink-muted: #8d8a81;
+
+  /* The one accent. Only ever used on ink surfaces or as a fill behind ink text. */
+  --color-signal: #c5f03c;
+  --color-signal-dim: #a8d11f;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-inter);
+  font-family: var(--font-sans);
+  font-size: 14px;
+}
+
+/* Small uppercase mono label used for section headings, metric labels, etc. */
+@utility eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Left "cursor" marker shown on hovered/focused list rows. */
+@utility row-cursor {
+  box-shadow: inset 2px 0 0 var(--color-zinc-900);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-zinc-900);
+  outline-offset: 2px;
 }
 
 ::selection {
-  background: #3b4fd8;
-  color: #ffffff;
+  background: var(--color-signal);
+  color: var(--color-ink);
+}
+
+[data-surface="ink"] :focus-visible {
+  outline-color: var(--color-signal);
 }

@@ -1,40 +1,78 @@
-import { formatCategory } from "@/lib/format";
-import type { Finding } from "@/types/relay";
-import { SeverityBadge } from "./severity-badge";
+import { fileAnchorId } from "@/lib/format";
+import type { ReviewFinding } from "@/types/relay";
+import { SeverityBadge, severityStyles } from "./severity-badge";
 
-export function FindingCard({ finding }: { finding: Finding }) {
+export function FindingCard({
+  finding,
+  linkToFile = false,
+}: {
+  finding: ReviewFinding;
+  /** Link the file location to its entry in the changed files list. */
+  linkToFile?: boolean;
+}) {
+  const location = `${finding.file_path}${
+    finding.line !== null ? `:${finding.line}` : ""
+  }`;
+
+  const locationClassName =
+    "min-w-0 truncate font-mono text-[11.5px] text-zinc-500 sm:ml-auto";
+
   return (
-    <article className="p-3 md:p-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <SeverityBadge severity={finding.severity} />
-            <span className="rounded-sm border border-zinc-300 bg-white px-1.5 py-0.5 text-xs font-medium text-zinc-700">
-              {formatCategory(finding.category)}
-            </span>
-            <span className="rounded-sm border border-zinc-300 bg-white px-1.5 py-0.5 text-xs font-medium text-zinc-700">
-              Confidence: {finding.confidence}
-            </span>
+    <article
+      className={`border-l-[3px] px-4 py-4 sm:px-5 ${severityStyles[finding.severity].border}`}
+    >
+      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
+        <SeverityBadge severity={finding.severity} />
+
+        {finding.category && (
+          <span className="eyebrow text-zinc-500">{finding.category}</span>
+        )}
+
+        {linkToFile ? (
+          <a
+            href={`#${fileAnchorId(finding.file_path)}`}
+            className={`${locationClassName} underline decoration-zinc-300 underline-offset-2 hover:text-zinc-900 hover:decoration-zinc-900`}
+            title={`Jump to ${location}`}
+          >
+            {location}
+          </a>
+        ) : (
+          <span className={locationClassName} title={location}>
+            {location}
+          </span>
+        )}
+      </div>
+
+      <h3 className="mt-2.5 text-[15px] font-semibold leading-5 tracking-[-0.005em] text-zinc-950">
+        {finding.title}
+      </h3>
+
+      <p className="mt-1.5 max-w-3xl text-[13.5px] leading-6 text-zinc-700">
+        {finding.explanation}
+      </p>
+
+      {finding.code_snippet && (
+        <div className="mt-3 overflow-hidden rounded-sm bg-ink">
+          <div className="flex items-center justify-between gap-3 border-b border-ink-line px-3 py-1.5 font-mono text-[11px] text-ink-muted">
+            <span className="truncate">{finding.file_path}</span>
+            {finding.line !== null && (
+              <span className="shrink-0 text-signal">L{finding.line}</span>
+            )}
           </div>
-          <h3 className="mt-3 text-base font-semibold text-zinc-950">
-            {finding.title}
-          </h3>
+          <pre className="overflow-x-auto px-3 py-2.5 font-mono text-[12.5px] leading-5 text-zinc-100">
+            <code>{finding.code_snippet}</code>
+          </pre>
         </div>
-        <p className="font-mono text-xs text-zinc-500 sm:text-right">
-          {finding.filePath}:{finding.line}
-        </p>
-      </div>
-      <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_0.9fr]">
-        <div>
-          <h4 className="text-sm font-semibold text-zinc-950">Why it matters</h4>
-          <p className="mt-1.5 text-sm leading-5 text-zinc-600">{finding.explanation}</p>
-          <h4 className="mt-4 text-sm font-semibold text-zinc-950">Suggested fix</h4>
-          <p className="mt-1.5 text-sm leading-5 text-zinc-600">{finding.suggestion}</p>
+      )}
+
+      {finding.suggestion && (
+        <div className="mt-3 max-w-3xl border-l-2 border-emerald-600 pl-3">
+          <p className="eyebrow text-emerald-800">Suggested fix</p>
+          <p className="mt-1 text-[13px] leading-5 text-zinc-700">
+            {finding.suggestion}
+          </p>
         </div>
-        <pre className="overflow-x-auto border border-zinc-200 bg-zinc-50 p-3 text-xs leading-5 text-zinc-800">
-          <code>{finding.codeSnippet}</code>
-        </pre>
-      </div>
+      )}
     </article>
   );
 }

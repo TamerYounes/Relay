@@ -1,97 +1,105 @@
 import Link from "next/link";
-import { formatReviewedAt } from "@/lib/format";
-import type { PullRequest } from "@/types/relay";
+import { pluralize } from "@/lib/format";
+import type { GitHubPullRequest, PullRequestReview } from "@/types/relay";
+import { PullRequestIcon } from "./pull-request-icon";
+import { RelativeTime } from "./relative-time";
 import { SeverityBadge } from "./severity-badge";
 import { StatusBadge } from "./status-badge";
 
 export function PullRequestListItem({
   pullRequest,
+  review,
 }: {
-  pullRequest: PullRequest;
+  pullRequest: GitHubPullRequest;
+  review: PullRequestReview;
 }) {
-  const findingCount = pullRequest.findings.length;
-
-  const filesWithFindings = pullRequest.files.filter(
-    (file) => file.findings > 0,
-  ).length;
+  const author = pullRequest.user?.login ?? "unknown";
 
   return (
     <li>
       <Link
-        href={`/pull-requests/${pullRequest.id}`}
-        className="group block px-5 py-5 transition-colors hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-zinc-950 focus:ring-inset"
+        href={`/pull-requests/${pullRequest.number}`}
+        className="group grid gap-x-6 gap-y-2.5 px-4 py-3.5 transition-colors hover:row-cursor hover:bg-zinc-50 focus-visible:row-cursor focus-visible:bg-zinc-50 focus-visible:outline-none sm:px-5 md:grid-cols-[minmax(0,1fr)_200px_88px] md:items-center"
       >
-        <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_280px] md:items-center">
+        <div className="flex min-w-0 gap-3">
+          <PullRequestIcon
+            draft={pullRequest.draft}
+            className="mt-0.5 h-4 w-4 shrink-0"
+          />
+
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="font-mono text-xs text-zinc-400">
+            <div className="flex min-w-0 items-center gap-2">
+              <h3 className="truncate text-[14px] font-semibold leading-5 text-zinc-950 underline-offset-2 group-hover:underline">
+                {pullRequest.title}
+              </h3>
+
+              {pullRequest.draft && (
+                <span className="eyebrow shrink-0 rounded-xs border border-zinc-300 px-1 leading-4 text-zinc-500">
+                  Draft
+                </span>
+              )}
+            </div>
+
+            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-zinc-500">
+              <span className="font-mono text-zinc-400">
                 #{pullRequest.number}
               </span>
 
-              <StatusBadge status={pullRequest.status} />
-              <SeverityBadge severity={pullRequest.severity} />
+              <span className="inline-flex items-center gap-1.5">
+                {pullRequest.user?.avatar_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={pullRequest.user.avatar_url}
+                    alt=""
+                    width={16}
+                    height={16}
+                    className="h-4 w-4 rounded-xs"
+                  />
+                )}
+                <span className="font-medium text-zinc-700">{author}</span>
+              </span>
+
+              <span>
+                opened <RelativeTime value={pullRequest.created_at} />
+              </span>
+
+              {pullRequest.head?.ref && pullRequest.base?.ref && (
+                <span className="hidden min-w-0 items-center gap-1 font-mono text-[11px] text-zinc-500 sm:inline-flex">
+                  <span className="max-w-64 truncate">{pullRequest.head.ref}</span>
+                  <span aria-hidden="true" className="text-zinc-300">
+                    →
+                  </span>
+                  <span className="max-w-40 truncate">{pullRequest.base.ref}</span>
+                </span>
+              )}
             </div>
+          </div>
+        </div>
 
-            <h3 className="mt-2 truncate text-sm font-semibold text-zinc-950 group-hover:text-zinc-600">
-              {pullRequest.title}
-            </h3>
+        <div className="flex flex-wrap items-center gap-1.5 pl-7 md:pl-0">
+          <StatusBadge status={review.status} />
 
-            <p className="mt-1 line-clamp-1 text-sm text-zinc-500">
-              {pullRequest.summary}
+          {review.highestSeverity && (
+            <SeverityBadge severity={review.highestSeverity} />
+          )}
+
+          {review.findingsCount > 0 && (
+            <span className="font-mono text-[11px] tabular-nums text-zinc-500 md:hidden">
+              {pluralize(review.findingsCount, "finding")}
+            </span>
+          )}
+        </div>
+
+        <div className="hidden text-right md:block">
+          <RelativeTime
+            value={pullRequest.updated_at}
+            className="font-mono text-[11.5px] text-zinc-600"
+          />
+          {review.findingsCount > 0 && (
+            <p className="mt-0.5 font-mono text-[11px] tabular-nums text-zinc-400">
+              {pluralize(review.findingsCount, "finding")}
             </p>
-
-            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-              <span className="font-mono text-zinc-500">
-                {pullRequest.repository}
-              </span>
-
-              <span className="text-zinc-300">·</span>
-
-              <span className="text-zinc-400">{pullRequest.author}</span>
-
-              <span className="text-zinc-300">·</span>
-
-              <span className="text-zinc-400">
-                {formatReviewedAt(pullRequest.reviewedAt)}
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-4 border-t border-zinc-100 pt-4 md:border-t-0 md:pt-0">
-            <div>
-              <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">
-                Findings
-              </p>
-
-              <p
-                className={`mt-1 font-mono text-sm font-semibold ${
-                  findingCount > 0 ? "text-zinc-950" : "text-zinc-400"
-                }`}
-              >
-                {findingCount}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">
-                Files
-              </p>
-
-              <p className="mt-1 font-mono text-sm font-semibold text-zinc-900">
-                {filesWithFindings}/{pullRequest.files.length}
-              </p>
-            </div>
-
-            <div>
-              <p className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">
-                Review
-              </p>
-
-              <p className="mt-1 font-mono text-sm font-semibold text-zinc-900">
-                {pullRequest.reviewDuration}
-              </p>
-            </div>
-          </div>
+          )}
         </div>
       </Link>
     </li>

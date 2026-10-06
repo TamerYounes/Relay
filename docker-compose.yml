@@ -1,0 +1,23 @@
+# Local production run of Relay.
+#
+#   docker compose --env-file .env.local up --build
+#
+# --env-file supplies the NEXT_PUBLIC_* build args below. env_file passes the
+# same file to the running container, which is where the server-only secrets
+# (GitHub OAuth, token encryption key) come from. Neither is copied into the
+# image: .env* is excluded by .dockerignore.
+
+services:
+  relay:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:?set NEXT_PUBLIC_SUPABASE_URL (run with --env-file .env.local)}
+        NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:?set NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (run with --env-file .env.local)}
+    image: relay:latest
+    env_file:
+      - .env.local
+    ports:
+      # Must match the host/port in GITHUB_REDIRECT_URI.
+      - "3000:3000"
+    restart: unless-stopped

@@ -1,6 +1,12 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
+import { AppShell } from "@/components/app-shell";
+import { buttonStyles } from "@/components/button-styles";
+import { Panel } from "@/components/panel";
+import { RelativeTime } from "@/components/relative-time";
 import { createClient } from "@/lib/supabase/server";
 import { GitHubRepositoryPicker } from "@/components/github-repository-picker";
+import { GitHubConnectionControls } from "@/components/github-connection-controls";
 
 export default async function SettingsPage({
   searchParams,
@@ -43,199 +49,178 @@ export default async function SettingsPage({
     .maybeSingle();
 
   return (
-    <div>
-      <div className="mb-8">
-        <Link
-          href="/"
-          className="text-xs text-zinc-400 transition-colors hover:text-zinc-700"
+    <AppShell>
+      <main className="max-w-3xl space-y-6">
+        <header className="border-b border-zinc-300 pb-5">
+          <p className="eyebrow text-zinc-500">Workspace</p>
+
+          <h1 className="mt-1.5 text-[26px] font-semibold leading-tight tracking-[-0.02em] text-zinc-950">
+            Settings
+          </h1>
+
+          <p className="mt-1 text-[13px] text-zinc-600">
+            Manage your GitHub connection, repository and workspace.
+          </p>
+        </header>
+
+        {params.github === "connected" && (
+          <div
+            role="status"
+            className="flex items-center gap-2.5 rounded-sm border border-emerald-200 border-l-[3px] border-l-emerald-600 bg-white px-4 py-2.5"
+          >
+            <p className="text-[13px] font-medium text-zinc-900">
+              GitHub connected successfully.
+            </p>
+          </div>
+        )}
+
+        {params.github === "error" && (
+          <div
+            role="alert"
+            className="flex items-center gap-2.5 rounded-sm border border-red-200 border-l-[3px] border-l-red-600 bg-white px-4 py-2.5"
+          >
+            <p className="text-[13px] font-medium text-zinc-900">
+              We couldn&apos;t connect GitHub. Please try again.
+            </p>
+          </div>
+        )}
+
+        <Panel
+          title="GitHub"
+          description="Relay uses your GitHub account to read repositories and pull requests."
         >
-          ← Back to overview
-        </Link>
-
-        <h1 className="mt-4 text-2xl font-semibold tracking-tight text-zinc-950">
-          Settings
-        </h1>
-
-        <p className="mt-1 text-sm text-zinc-500">
-          Manage your Relay workspace and repository.
-        </p>
-      </div>
-
-      {params.github === "connected" && (
-        <div className="mb-5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
-          <p className="text-sm font-medium text-emerald-800">
-            GitHub connected successfully.
-          </p>
-        </div>
-      )}
-
-      {params.github === "error" && (
-        <div className="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
-          <p className="text-sm font-medium text-red-800">
-            We couldn't connect GitHub. Please try again.
-          </p>
-        </div>
-      )}
-
-      <div className="max-w-2xl">
-        <section className="rounded-lg border border-zinc-200 bg-white">
-          <div className="border-b border-zinc-200 px-5 py-4">
-            <h2 className="text-sm font-semibold text-zinc-900">
-              Workspace
-            </h2>
-
-            <p className="mt-1 text-xs text-zinc-500">
-              Your current Relay workspace.
-            </p>
-          </div>
-
-          <div className="px-5 py-5">
-            <p className="text-xs text-zinc-400">
-              Workspace name
-            </p>
-
-            <p className="mt-1 text-sm font-medium text-zinc-900">
-              {workspace?.name ?? "No workspace"}
-            </p>
-          </div>
-        </section>
-
-        <section className="mt-5 rounded-lg border border-zinc-200 bg-white">
-          <div className="border-b border-zinc-200 px-5 py-4">
-            <h2 className="text-sm font-semibold text-zinc-900">
-              GitHub
-            </h2>
-
-            <p className="mt-1 text-xs text-zinc-500">
-              Connect GitHub to access your repositories and pull requests.
-            </p>
-          </div>
-
-          <div className="px-5 py-5">
+          <div className="px-4 py-4 sm:px-5">
             {githubConnection ? (
-              <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-md border border-zinc-200 bg-zinc-50 text-xs font-semibold text-zinc-700">
-                  GH
-                </span>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span
+                    aria-hidden="true"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ink font-mono text-sm font-semibold uppercase text-signal"
+                  >
+                    {githubConnection.github_login?.charAt(0) ?? "?"}
+                  </span>
 
-                <div>
-                  <p className="text-sm font-medium text-zinc-900">
-                    @{githubConnection.github_login}
-                  </p>
+                  <div className="min-w-0">
+                    <p className="truncate font-mono text-[13px] font-medium text-zinc-900">
+                      @{githubConnection.github_login}
+                    </p>
 
-                  <div className="mt-1 flex items-center gap-2">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-
-                    <span className="text-xs text-zinc-500">
+                    <p className="mt-0.5 flex items-center gap-1.5 text-xs text-zinc-500">
+                      <span aria-hidden="true" className="h-1.5 w-1.5 bg-emerald-600" />
                       Connected
-                    </span>
+                      {githubConnection.created_at && (
+                        <>
+                          {" "}
+                          <RelativeTime value={githubConnection.created_at} />
+                        </>
+                      )}
+                    </p>
                   </div>
                 </div>
+
+                <GitHubConnectionControls />
               </div>
             ) : (
-              <div className="flex items-center justify-between gap-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm font-medium text-zinc-900">
-                    Connect your GitHub account
+                    GitHub isn&apos;t connected
                   </p>
 
-                  <p className="mt-1 text-xs text-zinc-500">
-                    Relay will use GitHub to access your repositories and pull
-                    requests.
+                  <p className="mt-0.5 text-xs text-zinc-500">
+                    Connect your account to choose a repository and review its
+                    pull requests.
                   </p>
                 </div>
 
-                <Link
-                  href="/auth/github"
-                  className="shrink-0 rounded-md bg-zinc-900 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-zinc-800"
-                >
+                <Link href="/auth/github" className={buttonStyles.primary}>
                   Connect GitHub
                 </Link>
               </div>
             )}
           </div>
-        </section>
+        </Panel>
 
-        <section className="mt-5 rounded-lg border border-zinc-200 bg-white">
-          <div className="border-b border-zinc-200 px-5 py-4">
-            <h2 className="text-sm font-semibold text-zinc-900">
-              Connected repository
-            </h2>
+        <Panel
+          title="Repository"
+          description="The repository Relay shows pull requests for."
+        >
+          {repository ? (
+            <>
+              <dl className="divide-y divide-zinc-100 text-[13px]">
+                <SettingRow label="Repository">
+                  <a
+                    href={`https://github.com/${repository.full_name}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-mono text-xs font-medium text-zinc-900 underline-offset-2 hover:underline"
+                  >
+                    {repository.full_name}
+                  </a>
+                </SettingRow>
 
-            <p className="mt-1 text-xs text-zinc-500">
-              Repository Relay is currently connected to.
-            </p>
-          </div>
+                <SettingRow label="Default branch">
+                  <span className="rounded-xs border border-zinc-300 bg-white px-1.5 py-0.5 font-mono text-xs text-zinc-800">
+                    {repository.default_branch}
+                  </span>
+                </SettingRow>
 
-          <div className="space-y-5 px-5 py-5">
-            {repository ? (
-              <>
-                <div>
-                  <p className="text-xs text-zinc-400">
-                    Repository
-                  </p>
+                <SettingRow label="Status">
+                  <span className="inline-flex items-center gap-1.5 text-xs text-zinc-700">
+                    <span aria-hidden="true" className="h-1.5 w-1.5 bg-emerald-600" />
+                    Connected
+                  </span>
+                </SettingRow>
+              </dl>
 
-                  <div className="mt-2 flex items-center gap-3">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-md border border-zinc-200 bg-zinc-50 text-xs font-semibold text-zinc-600">
-                      GH
-                    </span>
-
-                    <div>
-                      <p className="text-sm font-medium text-zinc-900">
-                        {repository.full_name}
-                      </p>
-
-                      <p className="mt-0.5 text-xs text-zinc-400">
-                        GitHub repository
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-5 border-t border-zinc-100 pt-5">
-                  <div>
-                    <p className="text-xs text-zinc-400">
-                      Default branch
-                    </p>
-
-                    <p className="mt-1 font-mono text-xs text-zinc-700">
-                      {repository.default_branch}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-xs text-zinc-400">
-                      Status
-                    </p>
-
-                    <div className="mt-1 flex items-center gap-2">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-
-                      <span className="text-xs text-zinc-700">
-                        Connected
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="border-t border-zinc-100 pt-5">
-                  <GitHubRepositoryPicker
-                    currentRepository={repository.full_name}
-                  />
-                </div>
-              </>
-            ) : (
-              <div className="py-4">
-                <p className="mb-4 text-sm text-zinc-600">
-                  No repository connected.
-                </p>
-
-                {githubConnection && <GitHubRepositoryPicker />}
+              <div className="border-t border-zinc-200 bg-zinc-50 px-4 py-4 sm:px-5">
+                <GitHubRepositoryPicker
+                  currentRepository={repository.full_name}
+                />
               </div>
-            )}
-          </div>
-        </section>
-      </div>
+            </>
+          ) : (
+            <div className="px-4 py-4 sm:px-5">
+              <p className="text-sm font-medium text-zinc-900">
+                No repository selected
+              </p>
+
+              <p className="mb-4 mt-0.5 text-xs text-zinc-500">
+                {githubConnection
+                  ? "Choose one of your GitHub repositories to get started."
+                  : "Connect GitHub above to choose a repository."}
+              </p>
+
+              {githubConnection && <GitHubRepositoryPicker />}
+            </div>
+          )}
+        </Panel>
+
+        <Panel title="Workspace" description="Your current Relay workspace.">
+          <dl className="text-[13px]">
+            <SettingRow label="Workspace name">
+              <span className="font-medium text-zinc-900">
+                {workspace?.name ?? "No workspace"}
+              </span>
+            </SettingRow>
+          </dl>
+        </Panel>
+      </main>
+    </AppShell>
+  );
+}
+
+function SettingRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5">
+      <dt className="text-[13px] text-zinc-500">{label}</dt>
+      <dd className="min-w-0 truncate">{children}</dd>
     </div>
   );
 }
