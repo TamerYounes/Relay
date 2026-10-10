@@ -5,9 +5,11 @@ import { DashboardHeader } from "@/components/dashboard-header";
 import { EmptyState } from "@/components/empty-state";
 import { MetricCard } from "@/components/metric-card";
 import { PullRequestList } from "@/components/pr-list";
+import { ReviewActivity } from "@/components/review-activity";
 import { createClient } from "@/lib/supabase/server";
 import { decryptToken } from "@/lib/github/encryption";
 import { getHighestSeverity, getReviewStatus, pluralize } from "@/lib/format";
+import { getReviewStats, type PullRequestHistory } from "@/lib/stats";
 import type {
   GitHubPullRequest,
   PullRequestReview,
@@ -142,6 +144,7 @@ export default async function Home() {
           Authorization: `Bearer ${token}`,
           Accept: "application/vnd.github+json",
           "X-GitHub-Api-Version": "2022-11-28",
+          "User-Agent": "Relay",
         },
         cache: "no-store",
       },
@@ -225,11 +228,14 @@ export default async function Home() {
     );
   }
 
-  const reviews = await getReviewsByPullRequest(
-    supabase,
-    repository.id,
-    new Set(pullRequests.map((pullRequest) => pullRequest.number)),
-  );
+  const [reviews, stats] = await Promise.all([
+    getReviewsByPullRequest(
+      supabase,
+      repository.id,
+      new Set(pullRequests.map((pullRequest) => pullRequest.number)),
+    ),
+    getRepositoryStats(supabase, repository.id),
+  ]);
 
   const openReviews = [...reviews.values()];
   const reviewedCount = openReviews.filter(
@@ -287,10 +293,32 @@ export default async function Home() {
           />
         </section>
 
+        <ReviewActivity stats={stats} />
+
         <PullRequestList pullRequests={pullRequests} reviews={reviews} />
       </main>
     </AppShell>
   );
+}
+
+async function getRepositoryStats(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  repositoryId: string,
+) {
+  const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data, error } = await supabase
+    .from("pull_requests")
+    .select("state, draft, opened_at, first_review_at, merged_at")
+    .eq("repository_id", repositoryId)
+    .or(`state.eq.open,opened_at.gte.${since},merged_at.gte.${since}`);
+
+  if (error) {
+    console.error("Failed to load pull request history:", error.message);
+    return null;
+  }
+
+  return data.length > 0 ? getReviewStats(data as PullRequestHistory[]) : null;
 }
 
 type ReviewWithSecurity = PullRequestReview & {

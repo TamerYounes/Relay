@@ -34,7 +34,7 @@ export default async function SettingsPage({
     const { data } = await supabase
       .from("repositories")
       .select(
-        "id, provider, owner, name, full_name, default_branch",
+        "id, provider, owner, name, full_name, default_branch, webhook_id",
       )
       .eq("id", workspace.selected_repository_id)
       .maybeSingle();
@@ -170,6 +170,23 @@ export default async function SettingsPage({
                     <span aria-hidden="true" className="h-1.5 w-1.5 bg-emerald-600" />
                     Connected
                   </span>
+                </SettingRow>
+
+                <SettingRow label="Live updates">
+                  {repository.webhook_id ? (
+                    <span className="inline-flex items-center gap-1.5 text-xs text-zinc-700">
+                      <span aria-hidden="true" className="h-1.5 w-1.5 bg-emerald-600" />
+                      On
+                    </span>
+                  ) : (
+                    <span
+                      className="inline-flex items-center gap-1.5 text-xs text-zinc-500"
+                      title="Relay needs a public URL and admin access to the repository to add a webhook."
+                    >
+                      <span aria-hidden="true" className="h-1.5 w-1.5 bg-zinc-300" />
+                      Off
+                    </span>
+                  )}
                 </SettingRow>
               </dl>
 
