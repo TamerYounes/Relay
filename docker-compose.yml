@@ -17,6 +17,11 @@ services:
     image: relay:latest
     env_file:
       - .env.local
+    environment:
+      # Inside the container 127.0.0.1 is the container, not your machine.
+      OLLAMA_URL: ${OLLAMA_URL:-http://host.docker.internal:11434}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       # Must match the host/port in GITHUB_REDIRECT_URI.
       - "3000:3000"

@@ -317,14 +317,14 @@ ${limitedDiff}
 
   try {
     const response = await fetch(
-      "http://127.0.0.1:11434/api/generate",
+      `${process.env.OLLAMA_URL || "http://127.0.0.1:11434"}/api/generate`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "qwen2.5-coder:7b",
+          model: process.env.OLLAMA_MODEL || "qwen2.5-coder:7b",
           prompt,
           stream: false,
           format: "json",
