@@ -1,5 +1,7 @@
 # Relay
 
+Live: https://relay-three-bice.vercel.app
+
 Relay is a pull request review dashboard for GitHub. You connect your GitHub account, pick a repository, and Relay lists its open pull requests, runs an AI review on the diff, and shows the findings by file and severity. It also tracks review activity, like how long PRs wait for a first review.
 
 ## Features
