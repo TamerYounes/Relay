@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Relay
 
-## Getting Started
+Relay is a pull request review dashboard for GitHub. You connect your GitHub account, pick a repository, and Relay lists its open pull requests, runs an AI review on the diff, and shows the findings by file and severity. It also tracks review activity, like how long PRs wait for a first review.
 
-First, run the development server:
+## Features
+
+- GitHub OAuth with a state check, tokens encrypted with AES-256-GCM before they're stored
+- Repository picker for every repo your account can access
+- AI review of a PR's diff using a local model through Ollama, with findings grouped by severity and category
+- GitHub webhooks keep pull request history up to date without polling
+- Review stats: median time to first review, PRs waiting 3+ days, PRs merged this week
+- Supabase auth and Postgres with row level security
+
+## Stack
+
+Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4, Supabase, Vitest, Docker
+
+## How it works
+
+When you pick a repository, Relay saves it to your workspace, adds a webhook to the repo on GitHub, and imports the last 50 pull requests with their first review times. After that, GitHub sends `pull_request` and `pull_request_review` events to `/api/github/webhook`. The route checks the `X-Hub-Signature-256` header against the webhook secret before saving anything.
+
+Adding the webhook needs admin access to the repo and a public URL, so live updates are off when running on localhost. Settings shows whether they're on for the current repo.
+
+## Running locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Create `.env.local`:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_SECRET_KEY=
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+GITHUB_REDIRECT_URI=http://localhost:3000/auth/github/callback
+GITHUB_TOKEN_ENCRYPTION_KEY=   # openssl rand -hex 32
+GITHUB_WEBHOOK_SECRET=         # openssl rand -hex 32
 
-## Learn More
+# Optional
+RELAY_URL=                     # public URL, used for the webhook
+OLLAMA_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=qwen2.5-coder:7b
+```
 
-To learn more about Next.js, take a look at the following resources:
+Run the SQL in `supabase/migrations` in the Supabase SQL editor. For AI reviews, install [Ollama](https://ollama.com) and run `ollama pull qwen2.5-coder:7b`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Docker
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+docker compose --env-file .env.local up --build
+```
 
-## Deploy on Vercel
+The container reaches Ollama on your machine through `host.docker.internal`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Scripts
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+CI runs all four on every push and pull request.
