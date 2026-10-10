@@ -1,6 +1,20 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { decryptToken } from "@/lib/github/encryption";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { GitHubError, githubFetch, getGitHubToken } from "@/lib/github/api";
+import { syncRecentPullRequests } from "@/lib/github/sync";
+import { ensureRepositoryWebhook, getWebhookUrl } from "@/lib/github/webhooks";
+import { getOrCreateWorkspace } from "@/lib/workspace";
+
+export const maxDuration = 60;
+
+type GitHubRepository = {
+  id: number;
+  name: string;
+  full_name: string;
+  owner: { login: string };
+  default_branch: string;
+};
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -10,15 +24,10 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 },
-    );
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: {
-    full_name?: string;
-  };
+  let body: { full_name?: string };
 
   try {
     body = await request.json();
@@ -29,209 +38,178 @@ export async function POST(request: Request) {
     );
   }
 
-  const fullName = body.full_name?.trim();
+  const [owner, name, ...rest] = body.full_name?.trim().split("/") ?? [];
 
-  if (!fullName || !fullName.includes("/")) {
+  if (!owner || !name || rest.length > 0) {
     return NextResponse.json(
       { error: "Invalid repository." },
       { status: 400 },
     );
   }
 
-  const [owner, ...nameParts] = fullName.split("/");
-  const name = nameParts.join("/");
+  let token: string | null;
 
-  if (!owner || !name) {
+  try {
+    token = await getGitHubToken(supabase, user.id);
+  } catch (error) {
+    console.error("GitHub connection lookup failed:", error);
+
     return NextResponse.json(
-      { error: "Invalid repository." },
-      { status: 400 },
+      { error: "Couldn't read your GitHub connection." },
+      { status: 500 },
     );
   }
 
-  const { data: connection, error: connectionError } = await supabase
-    .from("github_connections")
-    .select("access_token_encrypted")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (connectionError || !connection) {
+  if (!token) {
     return NextResponse.json(
       { error: "GitHub is not connected." },
       { status: 400 },
     );
   }
 
-  let token: string;
+  let githubRepository: GitHubRepository;
 
   try {
-    token = decryptToken(connection.access_token_encrypted);
+    githubRepository = await githubFetch<GitHubRepository>(
+      token,
+      `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(name)}`,
+    );
   } catch (error) {
-    console.error("Failed to decrypt GitHub token:", error);
+    console.error("GitHub repository lookup failed:", error);
+
+    const status = error instanceof GitHubError ? error.status : 502;
 
     return NextResponse.json(
-      { error: "Invalid GitHub connection." },
+      { error: "GitHub could not access this repository." },
+      { status: status === 404 || status === 403 ? status : 502 },
+    );
+  }
+
+  const { workspace, error: workspaceError } = await getOrCreateWorkspace(
+    supabase,
+    user,
+  );
+
+  if (!workspace) {
+    console.error("Workspace lookup failed:", workspaceError);
+
+    return NextResponse.json(
+      { error: "Couldn't find or create your workspace." },
       { status: 500 },
     );
   }
 
-  const githubResponse = await fetch(
-    `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(name)}`,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-      },
-      cache: "no-store",
-    },
-  );
-
-  if (!githubResponse.ok) {
-    const errorBody = await githubResponse.text();
-
-    console.error(
-      "GitHub repository lookup failed:",
-      githubResponse.status,
-      errorBody,
-    );
-
-    return NextResponse.json(
-      { error: "GitHub could not access this repository." },
-      { status: githubResponse.status },
-    );
-  }
-
-  const githubRepository = await githubResponse.json();
-
   const repositoryData = {
     provider: "github",
+    github_repo_id: githubRepository.id,
     owner: githubRepository.owner.login,
     name: githubRepository.name,
     full_name: githubRepository.full_name,
     default_branch: githubRepository.default_branch,
   };
 
-  const { data: workspace, error: workspaceError } = await supabase
-    .from("workspaces")
+  const { data: existingRepository, error: lookupError } = await supabase
+    .from("repositories")
     .select("id")
-    .eq("created_by", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
+    .eq("workspace_id", workspace.id)
+    .eq("full_name", githubRepository.full_name)
     .maybeSingle();
 
-  if (workspaceError) {
-    console.error("Workspace lookup failed:", workspaceError);
+  if (lookupError) {
+    console.error("Repository lookup failed:", lookupError);
 
     return NextResponse.json(
-      { error: workspaceError.message },
+      { error: lookupError.message },
       { status: 500 },
     );
   }
 
-  if (!workspace) {
-    return NextResponse.json(
-      { error: "Workspace not found." },
-      { status: 404 },
-    );
-  }
+  const { data: repository, error: saveError } = existingRepository
+    ? await supabase
+        .from("repositories")
+        .update(repositoryData)
+        .eq("id", existingRepository.id)
+        .select("id, workspace_id, provider, owner, name, full_name, default_branch")
+        .single()
+    : await supabase
+        .from("repositories")
+        .insert({ workspace_id: workspace.id, ...repositoryData })
+        .select("id, workspace_id, provider, owner, name, full_name, default_branch")
+        .single();
 
-  const { data: existingRepository, error: repositoryLookupError } =
-    await supabase
-      .from("repositories")
-      .select("id")
-      .eq("workspace_id", workspace.id)
-      .eq("full_name", githubRepository.full_name)
-      .maybeSingle();
-
-  if (repositoryLookupError) {
-    console.error(
-      "Repository lookup failed:",
-      repositoryLookupError,
-    );
+  if (saveError || !repository) {
+    console.error("Repository save failed:", saveError);
 
     return NextResponse.json(
-      { error: repositoryLookupError.message },
+      { error: saveError?.message ?? "Couldn't save repository." },
       { status: 500 },
     );
   }
 
-  let repositoryId = existingRepository?.id;
-
-  if (repositoryId) {
-    const { error: updateError } = await supabase
-      .from("repositories")
-      .update(repositoryData)
-      .eq("id", repositoryId);
-
-    if (updateError) {
-      console.error("Repository update failed:", updateError);
-
-      return NextResponse.json(
-        { error: updateError.message },
-        { status: 500 },
-      );
-    }
-  } else {
-    const { data: newRepository, error: insertError } = await supabase
-      .from("repositories")
-      .insert({
-        workspace_id: workspace.id,
-        ...repositoryData,
-      })
-      .select("id")
-      .single();
-
-    if (insertError) {
-      console.error("Repository insert failed:", insertError);
-
-      return NextResponse.json(
-        { error: insertError.message },
-        { status: 500 },
-      );
-    }
-
-    repositoryId = newRepository.id;
-  }
-
-  const { error: workspaceUpdateError } = await supabase
+  const { error: selectError } = await supabase
     .from("workspaces")
-    .update({
-      selected_repository_id: repositoryId,
-    })
+    .update({ selected_repository_id: repository.id })
     .eq("id", workspace.id);
 
-  if (workspaceUpdateError) {
-    console.error(
-      "Failed to select repository:",
-      workspaceUpdateError,
-    );
+  if (selectError) {
+    console.error("Failed to select repository:", selectError);
 
     return NextResponse.json(
-      { error: workspaceUpdateError.message },
+      { error: selectError.message },
       { status: 500 },
     );
   }
 
-  const { data: selectedRepository, error: selectedRepositoryError } =
-    await supabase
-      .from("repositories")
-      .select(
-        "id, workspace_id, provider, owner, name, full_name, default_branch",
-      )
-      .eq("id", repositoryId)
-      .single();
+  const githubToken = token;
+  const origin = new URL(request.url).origin;
 
-  if (selectedRepositoryError) {
-    console.error(
-      "Failed to load selected repository:",
-      selectedRepositoryError,
-    );
+  after(() => setUpSync(githubToken, repository, origin));
 
-    return NextResponse.json(
-      { error: selectedRepositoryError.message },
-      { status: 500 },
-    );
+  return NextResponse.json(repository);
+}
+
+async function setUpSync(
+  token: string,
+  repository: { id: string; owner: string; name: string },
+  origin: string,
+) {
+  const admin = createAdminClient();
+
+  if (!admin) {
+    console.warn("SUPABASE_SECRET_KEY is not set, skipping pull request sync.");
+    return;
   }
 
-  return NextResponse.json(selectedRepository);
+  const secret = process.env.GITHUB_WEBHOOK_SECRET;
+  const webhookUrl = getWebhookUrl(origin);
+
+  if (secret && webhookUrl) {
+    try {
+      const webhookId = await ensureRepositoryWebhook(
+        token,
+        repository.owner,
+        repository.name,
+        webhookUrl,
+        secret,
+      );
+
+      await admin
+        .from("repositories")
+        .update({ webhook_id: webhookId })
+        .eq("id", repository.id);
+    } catch (error) {
+      console.error("Webhook setup failed:", error);
+
+      await admin
+        .from("repositories")
+        .update({ webhook_id: null })
+        .eq("id", repository.id);
+    }
+  }
+
+  try {
+    await syncRecentPullRequests(admin, token, repository);
+  } catch (error) {
+    console.error("Pull request sync failed:", error);
+  }
 }
