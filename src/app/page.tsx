@@ -37,7 +37,7 @@ export default async function Home() {
   if (!workspace) {
     return (
       <AppShell>
-        <main className="space-y-9">
+        <main className="space-y-7">
           <DashboardHeader />
 
           <EmptyState
@@ -57,7 +57,7 @@ export default async function Home() {
   if (!workspace.selected_repository_id) {
     return (
       <AppShell>
-        <main className="space-y-9">
+        <main className="space-y-7">
           <DashboardHeader />
 
           <EmptyState
@@ -83,7 +83,7 @@ export default async function Home() {
   if (!repository) {
     return (
       <AppShell>
-        <main className="space-y-9">
+        <main className="space-y-7">
           <DashboardHeader />
 
           <EmptyState
@@ -109,7 +109,7 @@ export default async function Home() {
   if (!connection) {
     return (
       <AppShell>
-        <main className="space-y-9">
+        <main className="space-y-7">
           <DashboardHeader />
 
           <EmptyState
@@ -165,7 +165,7 @@ export default async function Home() {
     if (githubStatus === 401) {
       return (
         <AppShell>
-          <main className="space-y-9">
+          <main className="space-y-7">
             <DashboardHeader repository={repository} />
 
             <EmptyState
@@ -190,7 +190,7 @@ export default async function Home() {
 
     return (
       <AppShell>
-        <main className="space-y-9">
+        <main className="space-y-7">
           <DashboardHeader repository={repository} />
 
           <EmptyState
@@ -245,16 +245,9 @@ export default async function Home() {
 
   return (
     <AppShell>
-      <main className="space-y-9">
+      <main className="space-y-7">
         <DashboardHeader
           repository={repository}
-          title={
-            needsYou > 0
-              ? `${pluralize(needsYou, "pull request")} need${needsYou === 1 ? "s" : ""} you`
-              : pullRequests.length > 0
-                ? "You're all caught up"
-                : "Pull requests"
-          }
           summary={
             pullRequests.length === 0 ? (
               <>

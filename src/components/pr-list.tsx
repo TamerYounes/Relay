@@ -83,15 +83,15 @@ export function PullRequestList({
             key={group.id}
             id={group.id}
             aria-label={group.title}
-            className="scroll-mt-6 space-y-3"
+            className="scroll-mt-6 space-y-2.5"
           >
-            <div className="flex items-center gap-2.5">
-              <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-ink">
+            <div className="flex items-baseline gap-2">
+              <h2 className="text-[15px] font-semibold text-ink">
                 {group.title}
               </h2>
               <span
-                className={`rounded-full px-2 text-[12px] font-semibold tabular-nums leading-5 ${
-                  group.attention ? "bg-accent text-background" : "bg-surface-3 text-ink-soft"
+                className={`text-[14px] tabular-nums ${
+                  group.attention ? "font-semibold text-accent" : "text-ink-faint"
                 }`}
               >
                 {groupItems.length}

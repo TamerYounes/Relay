@@ -244,7 +244,7 @@ export default async function PullRequestDetailPage(
         <header>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0 max-w-3xl">
-              <h1 className="wrap-break-word text-[26px] font-bold leading-tight tracking-[-0.03em] text-ink sm:text-[30px]">
+              <h1 className="wrap-break-word text-[24px] font-bold leading-tight tracking-[-0.02em] text-ink sm:text-[26px]">
                 {pullRequest.title}{" "}
                 <span className="font-normal text-ink-faint">
                   #{pullRequest.number}
@@ -253,10 +253,10 @@ export default async function PullRequestDetailPage(
 
               <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-2 text-[14px] text-ink-muted">
                 <span
-                  className={`inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-[12.5px] font-semibold ${
+                  className={`inline-flex h-5 items-center rounded px-1.5 text-[12px] font-semibold ${
                     pullRequest.draft
                       ? "bg-surface-3 text-ink-soft"
-                      : "bg-emerald-400/15 text-emerald-300 ring-1 ring-inset ring-emerald-400/30"
+                      : "bg-emerald-400/15 text-emerald-300"
                   }`}
                 >
                   {pullRequest.draft ? "Draft" : "Open"}

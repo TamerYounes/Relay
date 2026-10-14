@@ -56,7 +56,7 @@ export function ReviewSummary({
           </p>
 
           {findings.length > 0 && (
-            <div aria-hidden="true" className="mt-4 flex h-2 gap-0.5 overflow-hidden rounded-full">
+            <div aria-hidden="true" className="mt-3.5 flex h-1 gap-px overflow-hidden rounded-sm">
               {counts
                 .filter(({ count }) => count > 0)
                 .map(({ severity, count }) => (

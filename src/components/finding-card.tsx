@@ -18,7 +18,7 @@ export function FindingCard({
     "min-w-0 truncate font-mono text-xs text-ink-muted sm:ml-auto";
 
   return (
-    <article className="px-5 py-5 sm:px-6">
+    <article className="px-4 py-4 sm:px-5">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
         <SeverityBadge severity={finding.severity} />
 
@@ -41,7 +41,7 @@ export function FindingCard({
         )}
       </div>
 
-      <h3 className="mt-2.5 text-[16px] font-semibold leading-snug tracking-[-0.01em] text-ink">
+      <h3 className="mt-2 text-[15px] font-semibold leading-snug text-ink">
         {finding.title}
       </h3>
 
@@ -50,22 +50,16 @@ export function FindingCard({
       </p>
 
       {finding.code_snippet && (
-        <div className="mt-3.5 overflow-hidden rounded-xl bg-background ring-1 ring-line">
-          <div className="flex items-center justify-between gap-3 border-b border-line px-3.5 py-2 font-mono text-[11.5px] text-ink-faint">
-            <span className="truncate">{finding.file_path}</span>
-            {finding.line !== null && <span className="shrink-0">line {finding.line}</span>}
-          </div>
-          <pre className="overflow-x-auto px-3.5 py-3 font-mono text-[12.5px] leading-5 text-ink">
-            <code>{finding.code_snippet}</code>
-          </pre>
-        </div>
+        <pre className="mt-3 overflow-x-auto rounded-md border border-line bg-background px-3 py-2.5 font-mono text-[12.5px] leading-5 text-ink">
+          <code>{finding.code_snippet}</code>
+        </pre>
       )}
 
       {finding.suggestion && (
-        <div className="mt-3.5 max-w-[72ch] rounded-xl bg-emerald-400/8 px-3.5 py-2.5 text-[14px] leading-6 text-ink-soft ring-1 ring-inset ring-emerald-400/20">
-          <span className="font-semibold text-emerald-300">Suggested fix: </span>
+        <p className="mt-3 max-w-[68ch] text-[14px] leading-6 text-ink-soft">
+          <span className="font-semibold text-ink">Fix: </span>
           {finding.suggestion}
-        </div>
+        </p>
       )}
     </article>
   );

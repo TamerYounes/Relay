@@ -108,7 +108,7 @@ function ChangedFileRow({
           </span>
 
           {findings > 0 && (
-            <span className="shrink-0 rounded-full bg-accent/15 px-2 text-xs font-semibold text-accent">
+            <span className="shrink-0 text-xs font-semibold text-accent">
               {pluralize(findings, "finding")}
             </span>
           )}

@@ -22,12 +22,12 @@ export function DashboardHeader({
   return (
     <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
-        <h1 className="text-[34px] font-extrabold leading-[1.1] tracking-[-0.035em] text-ink sm:text-[40px]">
+        <h1 className="text-[26px] font-bold leading-tight tracking-[-0.02em] text-ink sm:text-[28px]">
           {title}
         </h1>
 
         {summary && (
-          <p className="mt-2 max-w-[60ch] text-[15px] leading-6 text-ink-muted">
+          <p className="mt-1 max-w-[60ch] text-[14px] leading-6 text-ink-muted">
             {summary}
           </p>
         )}
