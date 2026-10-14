@@ -42,18 +42,18 @@ export function SidebarNav({
               horizontal
                 ? `-mb-px inline-flex items-center gap-2 border-b-2 px-2.5 py-2.5 text-[13.5px] font-medium transition-colors ${
                     active
-                      ? "border-zinc-900 text-zinc-900"
-                      : "border-transparent text-zinc-600 hover:text-zinc-900"
+                      ? "border-accent text-ink"
+                      : "border-transparent text-ink-muted hover:text-ink"
                   }`
                 : `flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[14px] transition-colors ${
                     active
-                      ? "bg-zinc-100 font-semibold text-zinc-900"
-                      : "text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900"
+                      ? "bg-surface-3 font-semibold text-ink"
+                      : "text-ink-muted hover:bg-surface-2 hover:text-ink"
                   }`
             }
           >
             <item.Icon
-              className={`h-4 w-4 ${active ? "text-zinc-900" : "text-zinc-400"}`}
+              className={`h-4 w-4 ${active ? "text-ink" : "text-ink-faint"}`}
             />
             {item.label}
           </Link>

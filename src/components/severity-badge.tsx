@@ -7,28 +7,28 @@ export const severityStyles: Record<
 > = {
   // Critical is the only filled pill, so it can't be missed in a list.
   critical: {
-    badge: "bg-red-600 text-white",
+    badge: "bg-red-500 text-white shadow-[0_0_16px_-2px_rgb(239_68_68/0.55)]",
     dot: "bg-white",
-    text: "text-red-700",
-    bar: "bg-red-600",
+    text: "text-red-400",
+    bar: "bg-red-500",
   },
   high: {
-    badge: "bg-orange-50 text-orange-800 ring-1 ring-inset ring-orange-200",
-    dot: "bg-orange-500",
-    text: "text-orange-700",
+    badge: "bg-orange-500/15 text-orange-300 ring-1 ring-inset ring-orange-400/35",
+    dot: "bg-orange-400",
+    text: "text-orange-300",
     bar: "bg-orange-500",
   },
   medium: {
-    badge: "bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-200",
-    dot: "bg-amber-500",
-    text: "text-amber-700",
-    bar: "bg-amber-400",
+    badge: "bg-yellow-400/12 text-yellow-200 ring-1 ring-inset ring-yellow-300/30",
+    dot: "bg-yellow-300",
+    text: "text-yellow-200",
+    bar: "bg-yellow-300",
   },
   low: {
-    badge: "bg-zinc-100 text-zinc-700 ring-1 ring-inset ring-zinc-200",
-    dot: "bg-zinc-400",
-    text: "text-zinc-600",
-    bar: "bg-zinc-300",
+    badge: "bg-surface-3 text-ink-soft ring-1 ring-inset ring-line",
+    dot: "bg-ink-faint",
+    text: "text-ink-muted",
+    bar: "bg-ink-faint",
   },
 };
 

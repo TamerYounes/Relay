@@ -235,8 +235,8 @@ export default async function PullRequestDetailPage(
   return (
     <AppShell>
       <main className="space-y-7">
-        <nav aria-label="Breadcrumb" className="text-[13px] text-zinc-600">
-          <Link href="/" className="transition-colors hover:text-zinc-900">
+        <nav aria-label="Breadcrumb" className="text-[13px] text-ink-muted">
+          <Link href="/" className="transition-colors hover:text-ink">
             Pull requests
           </Link>
         </nav>
@@ -244,19 +244,19 @@ export default async function PullRequestDetailPage(
         <header>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0 max-w-3xl">
-              <h1 className="wrap-break-word text-[26px] font-bold leading-tight tracking-[-0.03em] text-zinc-900 sm:text-[30px]">
+              <h1 className="wrap-break-word text-[26px] font-bold leading-tight tracking-[-0.03em] text-ink sm:text-[30px]">
                 {pullRequest.title}{" "}
-                <span className="font-normal text-zinc-400">
+                <span className="font-normal text-ink-faint">
                   #{pullRequest.number}
                 </span>
               </h1>
 
-              <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-2 text-[14px] text-zinc-600">
+              <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-2 text-[14px] text-ink-muted">
                 <span
                   className={`inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-[12.5px] font-semibold ${
                     pullRequest.draft
-                      ? "bg-zinc-100 text-zinc-700"
-                      : "bg-emerald-600 text-white"
+                      ? "bg-surface-3 text-ink-soft"
+                      : "bg-emerald-400/15 text-emerald-300 ring-1 ring-inset ring-emerald-400/30"
                   }`}
                 >
                   {pullRequest.draft ? "Draft" : "Open"}
@@ -269,7 +269,7 @@ export default async function PullRequestDetailPage(
                     size={22}
                   />
                   <span>
-                    <span className="font-semibold text-zinc-900">
+                    <span className="font-semibold text-ink">
                       {pullRequest.user?.login ?? "Unknown"}
                     </span>{" "}
                     wants to merge
@@ -289,7 +289,7 @@ export default async function PullRequestDetailPage(
                 className={buttonStyles.secondary}
               >
                 Open on GitHub
-                <ExternalIcon className="h-3.5 w-3.5 text-zinc-400" />
+                <ExternalIcon className="h-3.5 w-3.5 text-ink-faint" />
               </a>
 
               <RunReviewButton
@@ -308,7 +308,7 @@ export default async function PullRequestDetailPage(
           <div className="min-w-0 space-y-8">
             {pullRequest.body && (
               <Panel title="Description">
-                <p className="max-h-80 overflow-y-auto whitespace-pre-wrap wrap-break-word px-4 py-3.5 text-[14px] leading-6 text-zinc-700 sm:px-5">
+                <p className="max-h-80 overflow-y-auto whitespace-pre-wrap wrap-break-word px-4 py-3.5 text-[14px] leading-6 text-ink-soft sm:px-5">
                   {pullRequest.body}
                 </p>
               </Panel>
@@ -329,7 +329,7 @@ export default async function PullRequestDetailPage(
             />
 
             <section className="surface px-5 py-4">
-              <h2 className="text-[14px] font-semibold text-zinc-900">
+              <h2 className="text-[14px] font-semibold text-ink">
                 Details
               </h2>
 
@@ -348,10 +348,10 @@ export default async function PullRequestDetailPage(
                 </DetailRow>
                 <DetailRow label="Changes">
                   <span className="tabular-nums">
-                    <span className="text-emerald-700">
+                    <span className="text-emerald-400">
                       +{pullRequest.additions}
                     </span>{" "}
-                    <span className="text-red-700">
+                    <span className="text-red-400">
                       −{pullRequest.deletions}
                     </span>
                   </span>
@@ -374,8 +374,8 @@ function DetailRow({
 }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <dt className="text-zinc-600">{label}</dt>
-      <dd className="min-w-0 truncate text-right text-zinc-900">
+      <dt className="text-ink-muted">{label}</dt>
+      <dd className="min-w-0 truncate text-right text-ink">
         {children}
       </dd>
     </div>
@@ -384,7 +384,7 @@ function DetailRow({
 
 function BranchName({ children }: { children: ReactNode }) {
   return (
-    <span className="max-w-56 truncate rounded-md bg-white px-2 py-0.5 font-mono text-[12.5px] text-zinc-900 shadow-(--shadow-card)">
+    <span className="max-w-56 truncate rounded-md bg-surface px-2 py-0.5 font-mono text-[12.5px] text-ink shadow-(--shadow-card)">
       {children}
     </span>
   );

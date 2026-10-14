@@ -15,11 +15,11 @@ export default function Loading() {
             key={index}
             className="overflow-hidden surface"
           >
-            <div className="space-y-2 border-b border-zinc-200 px-4 py-3 sm:px-5">
+            <div className="space-y-2 border-b border-line px-4 py-3 sm:px-5">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="h-3 w-64 max-w-full" />
             </div>
-            <div className="divide-y divide-zinc-100">
+            <div className="divide-y divide-line">
               {Array.from({ length: rows }, (_, row) => (
                 <div key={row} className="flex justify-between gap-4 px-4 py-3.5 sm:px-5">
                   <Skeleton className="h-3.5 w-28" />

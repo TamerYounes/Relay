@@ -200,7 +200,7 @@ export default async function Home() {
               <>
                 <p>Check that your GitHub connection is still active.</p>
                 {error instanceof Error && (
-                  <p className="mt-2 wrap-break-word font-mono text-[11px] text-red-600">
+                  <p className="mt-2 wrap-break-word font-mono text-[11px] text-red-300">
                     {error.message}
                   </p>
                 )}
@@ -236,6 +236,7 @@ export default async function Home() {
       ).length,
     ]),
   );
+  const needsYou = triageCounts["needs-you"];
   const openReviews = [...reviews.values()];
   const securityCount = openReviews.reduce(
     (total, review) => total + review.securityFindingsCount,
@@ -247,6 +248,13 @@ export default async function Home() {
       <main className="space-y-9">
         <DashboardHeader
           repository={repository}
+          title={
+            needsYou > 0
+              ? `${pluralize(needsYou, "pull request")} need${needsYou === 1 ? "s" : ""} you`
+              : pullRequests.length > 0
+                ? "You're all caught up"
+                : "Pull requests"
+          }
           summary={
             pullRequests.length === 0 ? (
               <>
@@ -266,7 +274,7 @@ export default async function Home() {
 
         {pullRequests.length > 0 && (
           <TriageOverview
-            needsYou={triageCounts["needs-you"]}
+            needsYou={needsYou}
             waiting={triageCounts.waiting}
             reviewed={triageCounts.reviewed}
           />

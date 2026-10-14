@@ -66,7 +66,7 @@ export function RunReviewButton({
         <span
           role={failed ? "alert" : "status"}
           className={`order-last w-full text-xs sm:order-first sm:w-auto ${
-            failed ? "text-red-600" : "text-zinc-500"
+            failed ? "text-red-300" : "text-ink-muted"
           }`}
         >
           {message}
@@ -82,7 +82,7 @@ export function RunReviewButton({
         {loading && (
           <span
             aria-hidden="true"
-            className="h-3 w-3 animate-spin rounded-full border-[1.5px] border-white/40 border-t-white"
+            className="h-3 w-3 animate-spin rounded-full border-[1.5px] border-background/40 border-t-background"
           />
         )}
         {loading

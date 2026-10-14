@@ -22,12 +22,12 @@ export function Panel({
     <section id={id} className={`scroll-mt-6 space-y-3 ${className}`}>
       <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-0.5">
         <div className="flex min-w-0 flex-wrap items-baseline gap-x-2.5">
-          <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-zinc-900">
+          <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-ink">
             {title}
           </h2>
 
           {description && (
-            <p className="text-[13px] text-zinc-500">{description}</p>
+            <p className="text-[13px] text-ink-muted">{description}</p>
           )}
         </div>
 
@@ -46,7 +46,7 @@ export function Panel({
 /** Count shown beside a panel title. */
 export function Count({ value }: { value: number }) {
   return (
-    <span className="ml-2 rounded-full bg-zinc-200/70 px-2 align-[1px] text-[12px] font-semibold tabular-nums leading-5 text-zinc-700">
+    <span className="ml-2 rounded-full bg-surface-3 px-2 align-[1px] text-[12px] font-semibold tabular-nums leading-5 text-ink-soft">
       {value}
     </span>
   );

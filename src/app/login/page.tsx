@@ -39,13 +39,13 @@ export default function LoginPage() {
     <main className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
         <div className="mb-6">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-900 text-white">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent text-background">
             <RelayMark className="h-5 w-5" />
           </span>
-          <h1 className="mt-6 text-[24px] font-bold tracking-[-0.025em] text-zinc-900">
+          <h1 className="mt-6 text-[24px] font-bold tracking-[-0.025em] text-ink">
             Sign in
           </h1>
-          <p className="mt-1 text-[14px] text-zinc-600">
+          <p className="mt-1 text-[14px] text-ink-muted">
             Review pull requests on your selected repository.
           </p>
         </div>
@@ -57,7 +57,7 @@ export default function LoginPage() {
           <div>
             <label
               htmlFor="email"
-              className="mb-1.5 block text-[13px] font-medium text-zinc-900"
+              className="mb-1.5 block text-[13px] font-medium text-ink"
             >
               Email
             </label>
@@ -67,14 +67,14 @@ export default function LoginPage() {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               required
-              className="h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm outline-none transition focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
+              className="h-10 w-full rounded-lg border border-line bg-surface-2 px-3 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
             />
           </div>
 
           <div>
             <label
               htmlFor="password"
-              className="mb-1.5 block text-[13px] font-medium text-zinc-900"
+              className="mb-1.5 block text-[13px] font-medium text-ink"
             >
               Password
             </label>
@@ -84,13 +84,13 @@ export default function LoginPage() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               required
-              className="h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm outline-none transition focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
+              className="h-10 w-full rounded-lg border border-line bg-surface-2 px-3 text-sm outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/20"
             />
           </div>
 
           {error && (
             <p
-              className="rounded-md bg-red-50 px-3 py-2 text-[13px] text-red-800"
+              className="rounded-lg bg-red-500/10 px-3 py-2 text-[13px] text-red-300 ring-1 ring-inset ring-red-400/25"
               role="alert"
             >
               {error}
@@ -100,7 +100,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="h-10 w-full rounded-lg bg-zinc-900 px-4 text-sm font-semibold text-white transition hover:bg-zinc-700 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60"
+            className="h-10 w-full rounded-lg bg-accent px-4 text-sm font-semibold text-background transition hover:bg-accent-strong active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Signing in..." : "Sign in"}
           </button>

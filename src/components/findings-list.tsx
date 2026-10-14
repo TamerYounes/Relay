@@ -69,7 +69,7 @@ export function FindingsList({
       )}
 
       {completed && findings.length > 0 && (
-        <div className="divide-y divide-zinc-100">
+        <div className="divide-y divide-line">
           {sortedFindings.map((finding) => (
             <FindingCard key={finding.id} finding={finding} linkToFile />
           ))}

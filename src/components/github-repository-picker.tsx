@@ -126,11 +126,11 @@ export function GitHubRepositoryPicker({
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-[13px] text-zinc-600">
+        <p className="text-[13px] text-ink-muted">
           {currentRepository ? (
             <>
               Current repository:{" "}
-              <span className="font-mono font-medium text-zinc-800">
+              <span className="font-mono font-medium text-ink">
                 {currentRepository}
               </span>
             </>
@@ -151,8 +151,8 @@ export function GitHubRepositoryPicker({
       </div>
 
       {open && (
-        <div className="mt-3 overflow-hidden rounded-xl bg-white shadow-(--shadow-raised)">
-          <div className="flex items-center gap-2 border-b border-zinc-200 px-3 py-2">
+        <div className="mt-3 overflow-hidden rounded-xl bg-surface shadow-(--shadow-raised)">
+          <div className="flex items-center gap-2 border-b border-line px-3 py-2">
             <svg
               aria-hidden="true"
               viewBox="0 0 16 16"
@@ -160,7 +160,7 @@ export function GitHubRepositoryPicker({
               stroke="currentColor"
               strokeWidth="1.5"
               strokeLinecap="round"
-              className="h-3.5 w-3.5 shrink-0 text-zinc-400"
+              className="h-3.5 w-3.5 shrink-0 text-ink-faint"
             >
               <circle cx="7" cy="7" r="4.5" />
               <path d="m10.5 10.5 3 3" />
@@ -173,45 +173,45 @@ export function GitHubRepositoryPicker({
               placeholder="Filter repositories"
               aria-label="Filter repositories"
               disabled={loading}
-              className="h-7 min-w-0 flex-1 bg-transparent text-[13px] text-zinc-900 outline-none placeholder:text-zinc-400"
+              className="h-7 min-w-0 flex-1 bg-transparent text-[13px] text-ink outline-none placeholder:text-ink-faint"
             />
 
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="shrink-0 rounded px-1.5 py-0.5 text-xs text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+              className="shrink-0 rounded px-1.5 py-0.5 text-xs text-ink-muted hover:bg-surface-3 hover:text-ink"
             >
               Cancel
             </button>
           </div>
 
           {loading && (
-            <div className="divide-y divide-zinc-100" aria-label="Loading repositories">
+            <div className="divide-y divide-line" aria-label="Loading repositories">
               {Array.from({ length: 4 }, (_, index) => (
                 <div key={index} className="flex items-center gap-3 px-3 py-2.5">
-                  <span className="h-3.5 w-3.5 rounded-full bg-zinc-100" />
-                  <span className="h-3 w-48 animate-pulse rounded bg-zinc-100" />
+                  <span className="h-3.5 w-3.5 rounded-full bg-surface-3" />
+                  <span className="h-3 w-48 animate-pulse rounded bg-surface-3" />
                 </div>
               ))}
             </div>
           )}
 
           {error && (
-            <div role="alert" className="border-b border-red-100 bg-red-50 px-3 py-2.5">
-              <p className="text-xs font-medium text-red-700">{error}</p>
+            <div role="alert" className="border-b border-red-400/20 bg-red-500/10 px-3 py-2.5">
+              <p className="text-xs font-medium text-red-300">{error}</p>
             </div>
           )}
 
           {message && (
-            <div role="status" className="border-b border-emerald-100 bg-emerald-50 px-3 py-2.5">
-              <p className="text-xs font-medium text-emerald-700">
+            <div role="status" className="border-b border-emerald-400/20 bg-emerald-400/10 px-3 py-2.5">
+              <p className="text-xs font-medium text-emerald-300">
                 {message}
               </p>
             </div>
           )}
 
           {!loading && !error && repositories.length === 0 && (
-            <p className="px-3 py-6 text-center text-xs text-zinc-500">
+            <p className="px-3 py-6 text-center text-xs text-ink-muted">
               No repositories found for this GitHub account.
             </p>
           )}
@@ -221,10 +221,10 @@ export function GitHubRepositoryPicker({
               <div
                 role="radiogroup"
                 aria-label="GitHub repositories"
-                className="max-h-72 divide-y divide-zinc-100 overflow-y-auto"
+                className="max-h-72 divide-y divide-line overflow-y-auto"
               >
                 {visibleRepositories.length === 0 && (
-                  <p className="px-3 py-6 text-center text-xs text-zinc-500">
+                  <p className="px-3 py-6 text-center text-xs text-ink-muted">
                     No repositories match &ldquo;{query}&rdquo;.
                   </p>
                 )}
@@ -242,38 +242,38 @@ export function GitHubRepositoryPicker({
                       aria-checked={selected}
                       onClick={() => chooseRepository(repository)}
                       className={`flex w-full items-center gap-3 px-3 py-2 text-left transition-colors ${
-                        selected ? "row-cursor bg-zinc-100" : "hover:bg-zinc-50"
+                        selected ? "row-cursor bg-surface-3" : "hover:bg-surface-2"
                       }`}
                     >
                       <span
                         aria-hidden="true"
                         className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border ${
                           selected
-                            ? "border-zinc-900 bg-zinc-900"
-                            : "border-zinc-300 bg-white"
+                            ? "border-accent bg-accent"
+                            : "border-line bg-surface"
                         }`}
                       >
                         {selected && (
-                          <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-surface" />
                         )}
                       </span>
 
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate font-mono text-xs font-medium text-zinc-900">
+                        <span className="block truncate font-mono text-xs font-medium text-ink">
                           {repository.full_name}
                         </span>
-                        <span className="block text-[11px] text-zinc-400">
+                        <span className="block text-[11px] text-ink-faint">
                           {repository.default_branch}
                         </span>
                       </span>
 
                       {current && (
-                        <span className="shrink-0 text-xs font-medium text-emerald-700">
+                        <span className="shrink-0 text-xs font-medium text-emerald-300">
                           Current
                         </span>
                       )}
 
-                      <span className="shrink-0 text-xs text-zinc-500">
+                      <span className="shrink-0 text-xs text-ink-muted">
                         {repository.private ? "Private" : "Public"}
                       </span>
                     </button>
@@ -281,10 +281,10 @@ export function GitHubRepositoryPicker({
                 })}
               </div>
 
-              <div className="flex items-center justify-between gap-3 border-t border-zinc-200 bg-zinc-50 px-3 py-2">
-                <p className="min-w-0 truncate text-xs text-zinc-500">
+              <div className="flex items-center justify-between gap-3 border-t border-line bg-surface-2 px-3 py-2">
+                <p className="min-w-0 truncate text-xs text-ink-muted">
                   {selectedRepository ? (
-                    <span className="font-mono text-zinc-800">
+                    <span className="font-mono text-ink">
                       {selectedRepository}
                     </span>
                   ) : (

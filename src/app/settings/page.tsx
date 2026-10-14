@@ -52,11 +52,11 @@ export default async function SettingsPage({
     <AppShell>
       <main className="max-w-3xl space-y-8">
         <header>
-          <h1 className="text-[30px] font-bold leading-tight tracking-[-0.025em] text-zinc-900">
+          <h1 className="text-[30px] font-bold leading-tight tracking-[-0.025em] text-ink">
             Settings
           </h1>
 
-          <p className="mt-2 text-[15px] text-zinc-600">
+          <p className="mt-2 text-[15px] text-ink-muted">
             Manage your GitHub connection, repository and workspace.
           </p>
         </header>
@@ -64,9 +64,9 @@ export default async function SettingsPage({
         {params.github === "connected" && (
           <div
             role="status"
-            className="flex items-center gap-2.5 rounded-md bg-emerald-50 px-4 py-2.5"
+            className="flex items-center gap-2.5 rounded-xl bg-emerald-400/10 px-4 py-2.5 ring-1 ring-inset ring-emerald-400/25"
           >
-            <p className="text-[13px] font-medium text-zinc-900">
+            <p className="text-[13px] font-medium text-ink">
               GitHub connected successfully.
             </p>
           </div>
@@ -75,9 +75,9 @@ export default async function SettingsPage({
         {params.github === "error" && (
           <div
             role="alert"
-            className="flex items-center gap-2.5 rounded-md bg-red-50 px-4 py-2.5"
+            className="flex items-center gap-2.5 rounded-xl bg-red-500/10 px-4 py-2.5 ring-1 ring-inset ring-red-400/25"
           >
-            <p className="text-[13px] font-medium text-zinc-900">
+            <p className="text-[13px] font-medium text-ink">
               We couldn&apos;t connect GitHub. Please try again.
             </p>
           </div>
@@ -93,18 +93,18 @@ export default async function SettingsPage({
                 <div className="flex min-w-0 items-center gap-3">
                   <span
                     aria-hidden="true"
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-sm font-semibold uppercase text-zinc-700"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-3 text-sm font-semibold uppercase text-ink-soft"
                   >
                     {githubConnection.github_login?.charAt(0) ?? "?"}
                   </span>
 
                   <div className="min-w-0">
-                    <p className="truncate font-mono text-[13px] font-medium text-zinc-900">
+                    <p className="truncate font-mono text-[13px] font-medium text-ink">
                       @{githubConnection.github_login}
                     </p>
 
-                    <p className="mt-0.5 flex items-center gap-1.5 text-xs text-zinc-500">
-                      <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
+                    <p className="mt-0.5 flex items-center gap-1.5 text-xs text-ink-muted">
+                      <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                       Connected
                       {githubConnection.created_at && (
                         <>
@@ -121,11 +121,11 @@ export default async function SettingsPage({
             ) : (
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-sm font-medium text-zinc-900">
+                  <p className="text-sm font-medium text-ink">
                     GitHub isn&apos;t connected
                   </p>
 
-                  <p className="mt-0.5 text-xs text-zinc-500">
+                  <p className="mt-0.5 text-xs text-ink-muted">
                     Connect your account to choose a repository and review its
                     pull requests.
                   </p>
@@ -145,33 +145,33 @@ export default async function SettingsPage({
         >
           {repository ? (
             <>
-              <dl className="divide-y divide-zinc-100 text-[13px]">
+              <dl className="divide-y divide-line text-[13px]">
                 <SettingRow label="Repository">
                   <a
                     href={`https://github.com/${repository.full_name}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="font-mono text-xs font-medium text-zinc-900 underline-offset-2 hover:underline"
+                    className="font-mono text-xs font-medium text-ink underline-offset-2 hover:underline"
                   >
                     {repository.full_name}
                   </a>
                 </SettingRow>
 
                 <SettingRow label="Default branch">
-                  <span className="rounded border border-line bg-white px-1.5 py-px font-mono text-[12.5px] text-zinc-900">
+                  <span className="rounded border border-line bg-surface px-1.5 py-px font-mono text-[12.5px] text-ink">
                     {repository.default_branch}
                   </span>
                 </SettingRow>
 
                 <SettingRow label="Status">
-                  <span className="inline-flex items-center gap-1.5 text-xs text-zinc-700">
-                    <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
+                  <span className="inline-flex items-center gap-1.5 text-xs text-ink-soft">
+                    <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
                     Connected
                   </span>
                 </SettingRow>
               </dl>
 
-              <div className="border-t border-zinc-100 px-4 py-4 sm:px-5">
+              <div className="border-t border-line px-4 py-4 sm:px-5">
                 <GitHubRepositoryPicker
                   currentRepository={repository.full_name}
                 />
@@ -179,11 +179,11 @@ export default async function SettingsPage({
             </>
           ) : (
             <div className="px-4 py-4 sm:px-5">
-              <p className="text-sm font-medium text-zinc-900">
+              <p className="text-sm font-medium text-ink">
                 No repository selected
               </p>
 
-              <p className="mb-4 mt-0.5 text-xs text-zinc-500">
+              <p className="mb-4 mt-0.5 text-xs text-ink-muted">
                 {githubConnection
                   ? "Choose one of your GitHub repositories to get started."
                   : "Connect GitHub above to choose a repository."}
@@ -197,7 +197,7 @@ export default async function SettingsPage({
         <Panel title="Workspace" description="Your current Relay workspace.">
           <dl className="text-[13px]">
             <SettingRow label="Workspace name">
-              <span className="font-medium text-zinc-900">
+              <span className="font-medium text-ink">
                 {workspace?.name ?? "No workspace"}
               </span>
             </SettingRow>
@@ -217,7 +217,7 @@ function SettingRow({
 }) {
   return (
     <div className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-5">
-      <dt className="text-[13px] text-zinc-500">{label}</dt>
+      <dt className="text-[13px] text-ink-muted">{label}</dt>
       <dd className="min-w-0 truncate">{children}</dd>
     </div>
   );

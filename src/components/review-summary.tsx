@@ -30,18 +30,18 @@ export function ReviewSummary({
   return (
     <section className="surface px-5 py-4">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-[14px] font-semibold text-zinc-900">Review</h2>
+        <h2 className="text-[14px] font-semibold text-ink">Review</h2>
         <StatusBadge status={status} />
       </div>
 
       {completed ? (
         <>
-          <p className="mt-1.5 text-[13.5px] leading-5 text-zinc-600">
+          <p className="mt-1.5 text-[13.5px] leading-5 text-ink-muted">
             {pluralize(findings.length, "finding")}
             {commitSha && (
               <>
                 {" "}on{" "}
-                <span className="font-mono text-xs text-zinc-900">
+                <span className="font-mono text-xs text-ink">
                   {commitSha.slice(0, 7)}
                 </span>
               </>
@@ -72,10 +72,10 @@ export function ReviewSummary({
           <dl className="mt-3 grid grid-cols-[1fr_auto] gap-y-1.5 text-[13.5px]">
             {counts.map(({ severity, count }) => (
               <div key={severity} className="contents">
-                <dt className="text-zinc-700">{formatSeverity(severity)}</dt>
+                <dt className="text-ink-soft">{formatSeverity(severity)}</dt>
                 <dd
                   className={`text-right font-semibold tabular-nums ${
-                    count > 0 ? severityStyles[severity].text : "font-normal text-zinc-400"
+                    count > 0 ? severityStyles[severity].text : "font-normal text-ink-faint"
                   }`}
                 >
                   {count}
@@ -85,7 +85,7 @@ export function ReviewSummary({
           </dl>
         </>
       ) : (
-        <p className="mt-1.5 text-[13.5px] leading-5 text-zinc-600">
+        <p className="mt-1.5 text-[13.5px] leading-5 text-ink-muted">
           {status === "running"
             ? "A review is running."
             : status === "failed"

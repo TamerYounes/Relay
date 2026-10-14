@@ -27,14 +27,14 @@ export function EmptyState({
     >
       <p
         className={`text-[16px] font-semibold ${
-          danger ? "text-red-700" : "text-zinc-900"
+          danger ? "text-red-300" : "text-ink"
         }`}
       >
         {title}
       </p>
 
       {description && (
-        <div className="mt-1.5 max-w-xl text-[14px] leading-6 text-zinc-600">
+        <div className="mt-1.5 max-w-xl text-[14px] leading-6 text-ink-muted">
           {description}
         </div>
       )}

@@ -86,19 +86,19 @@ export function PullRequestList({
             className="scroll-mt-6 space-y-3"
           >
             <div className="flex items-center gap-2.5">
-              <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-zinc-900">
+              <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-ink">
                 {group.title}
               </h2>
               <span
                 className={`rounded-full px-2 text-[12px] font-semibold tabular-nums leading-5 ${
-                  group.attention ? "bg-mark text-zinc-900" : "bg-zinc-200/70 text-zinc-700"
+                  group.attention ? "bg-accent text-background" : "bg-surface-3 text-ink-soft"
                 }`}
               >
                 {groupItems.length}
               </span>
             </div>
 
-            <ul className="surface divide-y divide-zinc-100 overflow-hidden">
+            <ul className="surface divide-y divide-line overflow-hidden">
               {groupItems.map(({ pullRequest, review }) => (
                 <PullRequestListItem
                   key={pullRequest.id}

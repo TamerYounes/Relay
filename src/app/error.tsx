@@ -18,17 +18,17 @@ export default function Error({
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-md surface p-6">
-        <h1 className="text-[18px] font-semibold text-zinc-900">
+        <h1 className="text-[18px] font-semibold text-ink">
           Something went wrong
         </h1>
 
-        <p className="mt-1.5 text-[14px] leading-6 text-zinc-600">
+        <p className="mt-1.5 text-[14px] leading-6 text-ink-muted">
           Relay hit an unexpected error while loading this page. Try again, or
           head back to your pull requests.
         </p>
 
         {error.digest && (
-          <p className="mt-3 font-mono text-[11px] text-zinc-400">
+          <p className="mt-3 font-mono text-[11px] text-ink-faint">
             Error ID: {error.digest}
           </p>
         )}

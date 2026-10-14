@@ -8,20 +8,26 @@ type DashboardHeaderProps = {
     full_name: string;
     default_branch?: string | null;
   } | null;
+  /** Headline. Defaults to "Pull requests". */
+  title?: ReactNode;
   /** One-line summary under the title. */
   summary?: ReactNode;
 };
 
-export function DashboardHeader({ repository, summary }: DashboardHeaderProps) {
+export function DashboardHeader({
+  repository,
+  title = "Pull requests",
+  summary,
+}: DashboardHeaderProps) {
   return (
     <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
-        <h1 className="text-[32px] font-bold leading-tight tracking-[-0.03em] text-zinc-900">
-          Pull requests
+        <h1 className="text-[34px] font-extrabold leading-[1.1] tracking-[-0.035em] text-ink sm:text-[40px]">
+          {title}
         </h1>
 
         {summary && (
-          <p className="mt-1.5 max-w-[60ch] text-[15px] leading-6 text-zinc-600">
+          <p className="mt-2 max-w-[60ch] text-[15px] leading-6 text-ink-muted">
             {summary}
           </p>
         )}
@@ -39,7 +45,7 @@ export function DashboardHeader({ repository, summary }: DashboardHeaderProps) {
             className={buttonStyles.secondary}
           >
             GitHub
-            <ExternalIcon className="h-3.5 w-3.5 text-zinc-400" />
+            <ExternalIcon className="h-3.5 w-3.5 text-ink-faint" />
           </a>
         </div>
       )}
@@ -50,6 +56,6 @@ export function DashboardHeader({ repository, summary }: DashboardHeaderProps) {
 /** Wraps a branch or ref name in summary text. */
 export function Ref({ children }: { children: ReactNode }) {
   return (
-    <span className="font-mono text-[13.5px] text-zinc-900">{children}</span>
+    <span className="font-mono text-[13.5px] text-ink">{children}</span>
   );
 }

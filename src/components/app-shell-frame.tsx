@@ -22,9 +22,9 @@ export function AppShellFrame({
   email,
 }: AppShellFrameProps) {
   return (
-    <div className="min-h-screen bg-background text-zinc-900">
+    <div className="min-h-screen bg-background text-ink">
       <div className="flex min-h-screen">
-        <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-line bg-white lg:flex">
+        <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-line bg-sidebar lg:flex">
           <div className="flex h-16 items-center px-6">
             <Logo />
           </div>
@@ -41,14 +41,14 @@ export function AppShellFrame({
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-10 border-b border-line bg-white lg:hidden">
+          <header className="sticky top-0 z-10 border-b border-line bg-sidebar lg:hidden">
             <div className="flex h-14 items-center justify-between gap-4 px-4 sm:px-6">
               <Logo />
 
               <div className="flex min-w-0 items-center gap-1">
                 <Link
                   href="/settings"
-                  className="min-w-0 truncate rounded-md border border-line px-2.5 py-1 font-mono text-xs text-zinc-800 transition-colors hover:border-zinc-400"
+                  className="min-w-0 truncate rounded-md border border-line px-2.5 py-1 font-mono text-xs text-ink transition-colors hover:border-line-strong"
                   title="Change repository"
                 >
                   {repositoryName === undefined
@@ -80,10 +80,10 @@ function Logo() {
       className="flex items-center gap-2.5 rounded-md"
       aria-label="Relay dashboard"
     >
-      <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-zinc-900 text-white shadow-[inset_0_-1px_0_rgb(0_0_0/0.4)]">
+      <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent text-background">
         <RelayMark className="h-4 w-4" />
       </span>
-      <span className="text-[17px] font-bold tracking-[-0.02em] text-zinc-900">
+      <span className="text-[17px] font-bold tracking-[-0.02em] text-ink">
         Relay
       </span>
     </Link>
@@ -100,26 +100,26 @@ function RepositorySelector({
   return (
     <Link
       href="/settings"
-      className="group block rounded-xl border border-line bg-zinc-50 px-3 py-2.5 transition-colors hover:border-zinc-300 hover:bg-white"
+      className="group block rounded-xl border border-line bg-surface px-3 py-2.5 transition-colors hover:border-line-strong hover:bg-surface-2"
       title={repositoryName ? `${repositoryName}: change repository` : undefined}
     >
       <span className="flex items-center justify-between gap-2">
         <span className="meta-label">Repository</span>
-        <span className="text-xs text-zinc-500 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+        <span className="text-xs text-ink-muted opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
           Change
         </span>
       </span>
 
       {loading ? (
-        <span className="mt-1.5 block h-3.5 w-32 rounded-sm bg-zinc-100" />
+        <span className="mt-1.5 block h-3.5 w-32 rounded-sm bg-surface-3" />
       ) : repositoryName ? (
         <span
-          className="mt-0.5 block truncate font-mono text-[13px] font-medium text-zinc-900"
+          className="mt-0.5 block truncate font-mono text-[13px] font-medium text-ink"
         >
           {repositoryName}
         </span>
       ) : (
-        <span className="mt-0.5 block text-[13px] text-zinc-700">
+        <span className="mt-0.5 block text-[13px] text-ink-soft">
           Select a repository
         </span>
       )}

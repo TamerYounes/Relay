@@ -7,8 +7,8 @@ export default function PullRequestNotFound() {
   return (
     <AppShell>
       <main className="space-y-6">
-        <nav aria-label="Breadcrumb" className="text-xs text-zinc-500">
-          <Link href="/" className="font-medium transition-colors hover:text-zinc-950">
+        <nav aria-label="Breadcrumb" className="text-xs text-ink-muted">
+          <Link href="/" className="font-medium transition-colors hover:text-ink">
             Pull requests
           </Link>
         </nav>

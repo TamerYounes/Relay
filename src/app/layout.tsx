@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono, Schibsted_Grotesk } from "next/font/google";
+import { JetBrains_Mono, Onest } from "next/font/google";
 import "./globals.css";
 
-const sans = Schibsted_Grotesk({
-  variable: "--font-schibsted",
+const sans = Onest({
+  variable: "--font-onest",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 // Code only: branches, file paths, commit SHAs, diffs.
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className="h-full">
+    <html lang="en" className="h-full bg-background">
       <body
         className={`${sans.variable} ${mono.variable} min-h-full antialiased`}
       >

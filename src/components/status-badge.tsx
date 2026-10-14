@@ -3,28 +3,28 @@ import { formatStatus } from "@/lib/format";
 
 const statusStyles: Record<ReviewStatus, { badge: string; dot: string }> = {
   not_reviewed: {
-    badge: "bg-zinc-100 text-zinc-600",
-    dot: "border border-zinc-400 bg-transparent",
+    badge: "bg-surface-3 text-ink-muted",
+    dot: "border border-line-strong bg-transparent",
   },
   running: {
-    badge: "bg-sky-50 text-sky-800 ring-1 ring-inset ring-sky-200",
-    dot: "animate-pulse bg-sky-500",
+    badge: "bg-sky-400/12 text-sky-300 ring-1 ring-inset ring-sky-400/30",
+    dot: "animate-pulse bg-sky-400",
   },
   failed: {
-    badge: "bg-red-50 text-red-700 ring-1 ring-inset ring-red-200",
-    dot: "bg-red-600",
+    badge: "bg-red-500/12 text-red-300 ring-1 ring-inset ring-red-400/35",
+    dot: "bg-red-400",
   },
   clean: {
-    badge: "bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200",
-    dot: "bg-emerald-500",
+    badge: "bg-emerald-400/12 text-emerald-300 ring-1 ring-inset ring-emerald-400/30",
+    dot: "bg-emerald-400",
   },
   reviewed: {
-    badge: "bg-zinc-100 text-zinc-700",
-    dot: "bg-zinc-500",
+    badge: "bg-surface-3 text-ink-soft",
+    dot: "bg-ink-faint",
   },
   needs_attention: {
-    badge: "bg-mark-soft text-zinc-900 ring-1 ring-inset ring-mark",
-    dot: "bg-zinc-900",
+    badge: "bg-accent/12 text-accent ring-1 ring-inset ring-accent/40",
+    dot: "bg-accent",
   },
 };
 

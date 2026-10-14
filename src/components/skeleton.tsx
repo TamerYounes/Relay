@@ -2,7 +2,7 @@ export function Skeleton({ className = "" }: { className?: string }) {
   return (
     <span
       aria-hidden="true"
-      className={`block animate-pulse rounded-sm bg-zinc-200/70 ${className}`}
+      className={`block animate-pulse rounded-sm bg-surface-3 ${className}`}
     />
   );
 }
@@ -13,7 +13,7 @@ export function PanelSkeleton({ rows = 4 }: { rows?: number }) {
       <Skeleton className="h-4 w-32" />
       <div className="surface overflow-hidden">
 
-      <div className="divide-y divide-zinc-100">
+      <div className="divide-y divide-line">
         {Array.from({ length: rows }, (_, index) => (
           <div key={index} className="flex items-center gap-3 px-4 py-3.5 sm:px-5">
             <div className="min-w-0 flex-1 space-y-2">
