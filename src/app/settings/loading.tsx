@@ -13,7 +13,7 @@ export default function Loading() {
         {[2, 3, 1].map((rows, index) => (
           <div
             key={index}
-            className="overflow-hidden rounded border border-zinc-200 bg-white"
+            className="overflow-hidden surface"
           >
             <div className="space-y-2 border-b border-zinc-200 px-4 py-3 sm:px-5">
               <Skeleton className="h-4 w-24" />

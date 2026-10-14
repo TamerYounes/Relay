@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
+import { JetBrains_Mono, Schibsted_Grotesk } from "next/font/google";
 import "./globals.css";
 
-const plexSans = IBM_Plex_Sans({
-  variable: "--font-plex-sans",
+const sans = Schibsted_Grotesk({
+  variable: "--font-schibsted",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
 
-const plexMono = IBM_Plex_Mono({
-  variable: "--font-plex-mono",
+// Code only: branches, file paths, commit SHAs, diffs.
+const mono = JetBrains_Mono({
+  variable: "--font-jetbrains",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500"],
 });
 
 export const metadata: Metadata = {
@@ -23,7 +24,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className="h-full">
       <body
-        className={`${plexSans.variable} ${plexMono.variable} min-h-full antialiased`}
+        className={`${sans.variable} ${mono.variable} min-h-full antialiased`}
       >
         {children}
       </body>

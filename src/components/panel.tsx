@@ -9,6 +9,7 @@ type PanelProps = {
   className?: string;
 };
 
+/** A titled section: heading outside, content in a white box. */
 export function Panel({
   title,
   description,
@@ -18,16 +19,15 @@ export function Panel({
   className = "",
 }: PanelProps) {
   return (
-    <section
-      id={id}
-      className={`scroll-mt-6 overflow-hidden rounded border border-zinc-200 bg-white ${className}`}
-    >
-      <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-zinc-200 bg-zinc-50 px-4 py-2.5 sm:px-5">
-        <div className="min-w-0">
-          <h2 className="text-[13px] font-semibold text-zinc-950">{title}</h2>
+    <section id={id} className={`scroll-mt-6 space-y-3 ${className}`}>
+      <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-0.5">
+        <div className="flex min-w-0 flex-wrap items-baseline gap-x-2.5">
+          <h2 className="text-[16px] font-semibold tracking-[-0.01em] text-zinc-900">
+            {title}
+          </h2>
 
           {description && (
-            <p className="mt-0.5 text-xs text-zinc-500">{description}</p>
+            <p className="text-[13px] text-zinc-500">{description}</p>
           )}
         </div>
 
@@ -36,15 +36,17 @@ export function Panel({
         )}
       </header>
 
-      {children}
+      <div className="surface overflow-hidden">
+        {children}
+      </div>
     </section>
   );
 }
 
-/** Small mono count shown beside a panel title. */
+/** Count shown beside a panel title. */
 export function Count({ value }: { value: number }) {
   return (
-    <span className="ml-1.5 font-mono text-xs font-normal tabular-nums text-zinc-400">
+    <span className="ml-2 rounded-full bg-zinc-200/70 px-2 align-[1px] text-[12px] font-semibold tabular-nums leading-5 text-zinc-700">
       {value}
     </span>
   );

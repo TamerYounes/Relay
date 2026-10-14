@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { RelayMark } from "@/components/icons";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,23 +36,23 @@ export default function LoginPage() {
   }
 
   return (
-    <main data-surface="ink" className="flex min-h-screen items-center justify-center bg-ink px-4">
+    <main className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm">
         <div className="mb-6">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xs bg-signal font-mono text-[15px] font-bold text-ink">
-            R
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-zinc-900 text-white">
+            <RelayMark className="h-5 w-5" />
           </span>
-          <h1 className="mt-5 text-[22px] font-semibold tracking-[-0.02em] text-white">
-            Sign in to Relay
+          <h1 className="mt-6 text-[24px] font-bold tracking-[-0.025em] text-zinc-900">
+            Sign in
           </h1>
-          <p className="mt-1 text-[13px] text-ink-muted">
-            Review pull requests across your workspace.
+          <p className="mt-1 text-[14px] text-zinc-600">
+            Review pull requests on your selected repository.
           </p>
         </div>
 
         <form
           onSubmit={handleLogin}
-          className="space-y-4 rounded border border-ink-line bg-white p-5 [&_:focus-visible]:outline-zinc-900"
+          className="surface space-y-4 p-6"
         >
           <div>
             <label
@@ -66,7 +67,7 @@ export default function LoginPage() {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               required
-              className="h-9 w-full rounded-sm border border-zinc-300 bg-white px-3 text-sm outline-none transition focus:border-zinc-900 focus:ring-2 focus:ring-signal/60"
+              className="h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm outline-none transition focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
             />
           </div>
 
@@ -83,13 +84,13 @@ export default function LoginPage() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               required
-              className="h-9 w-full rounded-sm border border-zinc-300 bg-white px-3 text-sm outline-none transition focus:border-zinc-900 focus:ring-2 focus:ring-signal/60"
+              className="h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm outline-none transition focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
             />
           </div>
 
           {error && (
             <p
-              className="rounded-sm border border-red-200 border-l-[3px] border-l-red-600 bg-red-50 px-3 py-2 text-[13px] text-red-800"
+              className="rounded-md bg-red-50 px-3 py-2 text-[13px] text-red-800"
               role="alert"
             >
               {error}
@@ -99,7 +100,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="h-9 w-full rounded-sm bg-zinc-900 px-4 text-sm font-medium text-white transition hover:bg-zinc-700 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60"
+            className="h-10 w-full rounded-lg bg-zinc-900 px-4 text-sm font-semibold text-white transition hover:bg-zinc-700 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Signing in..." : "Sign in"}
           </button>

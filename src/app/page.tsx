@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { buttonStyles } from "@/components/button-styles";
-import { DashboardHeader } from "@/components/dashboard-header";
+import { DashboardHeader, Ref } from "@/components/dashboard-header";
 import { EmptyState } from "@/components/empty-state";
-import { MetricCard } from "@/components/metric-card";
-import { PullRequestList } from "@/components/pr-list";
+import { getReview, PullRequestList, triageGroups } from "@/components/pr-list";
+import { TriageOverview } from "@/components/triage-overview";
 import { createClient } from "@/lib/supabase/server";
 import { decryptToken } from "@/lib/github/encryption";
+import { githubHeaders } from "@/lib/github/api";
 import { getHighestSeverity, getReviewStatus, pluralize } from "@/lib/format";
 import type {
   GitHubPullRequest,
@@ -36,7 +37,7 @@ export default async function Home() {
   if (!workspace) {
     return (
       <AppShell>
-        <main className="space-y-6">
+        <main className="space-y-9">
           <DashboardHeader />
 
           <EmptyState
@@ -56,7 +57,7 @@ export default async function Home() {
   if (!workspace.selected_repository_id) {
     return (
       <AppShell>
-        <main className="space-y-6">
+        <main className="space-y-9">
           <DashboardHeader />
 
           <EmptyState
@@ -82,7 +83,7 @@ export default async function Home() {
   if (!repository) {
     return (
       <AppShell>
-        <main className="space-y-6">
+        <main className="space-y-9">
           <DashboardHeader />
 
           <EmptyState
@@ -108,7 +109,7 @@ export default async function Home() {
   if (!connection) {
     return (
       <AppShell>
-        <main className="space-y-6">
+        <main className="space-y-9">
           <DashboardHeader />
 
           <EmptyState
@@ -138,11 +139,7 @@ export default async function Home() {
         repository.name,
       )}/pulls?state=open&sort=updated&direction=desc&per_page=50`,
       {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/vnd.github+json",
-          "X-GitHub-Api-Version": "2022-11-28",
-        },
+        headers: githubHeaders(token),
         cache: "no-store",
       },
     );
@@ -168,7 +165,7 @@ export default async function Home() {
     if (githubStatus === 401) {
       return (
         <AppShell>
-          <main className="space-y-6">
+          <main className="space-y-9">
             <DashboardHeader repository={repository} />
 
             <EmptyState
@@ -193,7 +190,7 @@ export default async function Home() {
 
     return (
       <AppShell>
-        <main className="space-y-6">
+        <main className="space-y-9">
           <DashboardHeader repository={repository} />
 
           <EmptyState
@@ -231,16 +228,15 @@ export default async function Home() {
     new Set(pullRequests.map((pullRequest) => pullRequest.number)),
   );
 
+  const triageCounts = Object.fromEntries(
+    triageGroups.map((group) => [
+      group.id,
+      pullRequests.filter((pullRequest) =>
+        group.statuses.includes(getReview(reviews, pullRequest.number).status),
+      ).length,
+    ]),
+  );
   const openReviews = [...reviews.values()];
-  const reviewedCount = openReviews.filter(
-    (review) =>
-      review.status !== "not_reviewed" &&
-      review.status !== "running" &&
-      review.status !== "failed",
-  ).length;
-  const attentionCount = openReviews.filter(
-    (review) => review.status === "needs_attention",
-  ).length;
   const securityCount = openReviews.reduce(
     (total, review) => total + review.securityFindingsCount,
     0,
@@ -248,44 +244,33 @@ export default async function Home() {
 
   return (
     <AppShell>
-      <main className="space-y-6">
-        <DashboardHeader repository={repository} />
+      <main className="space-y-9">
+        <DashboardHeader
+          repository={repository}
+          summary={
+            pullRequests.length === 0 ? (
+              <>
+                No open pull requests in <Ref>{repository.full_name}</Ref>.
+              </>
+            ) : (
+              <>
+                {pluralize(pullRequests.length, "open pull request")} in{" "}
+                <Ref>{repository.full_name}</Ref>
+                {securityCount > 0
+                  ? `, with ${pluralize(securityCount, "security finding")}.`
+                  : "."}
+              </>
+            )
+          }
+        />
 
-        <section
-          aria-label="Review metrics"
-          className="grid grid-cols-2 gap-px overflow-hidden rounded border border-zinc-200 bg-zinc-200 lg:grid-cols-4"
-        >
-          <MetricCard
-            label="Open PRs"
-            value={String(pullRequests.length)}
-            detail={`In ${repository.full_name}`}
+        {pullRequests.length > 0 && (
+          <TriageOverview
+            needsYou={triageCounts["needs-you"]}
+            waiting={triageCounts.waiting}
+            reviewed={triageCounts.reviewed}
           />
-
-          <MetricCard
-            label="Reviewed"
-            value={String(reviewedCount)}
-            meter={{ value: reviewedCount, max: pullRequests.length }}
-            detail={
-              pullRequests.length > 0
-                ? `${pullRequests.length - reviewedCount} awaiting review`
-                : "No open pull requests"
-            }
-          />
-
-          <MetricCard
-            label="Needs attention"
-            value={String(attentionCount)}
-            detail="High or critical findings"
-            tone={attentionCount > 0 ? "warning" : "neutral"}
-          />
-
-          <MetricCard
-            label="Security findings"
-            value={String(securityCount)}
-            detail={`Across ${pluralize(reviewedCount, "reviewed PR")}`}
-            tone={securityCount > 0 ? "danger" : "neutral"}
-          />
-        </section>
+        )}
 
         <PullRequestList pullRequests={pullRequests} reviews={reviews} />
       </main>

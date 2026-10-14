@@ -4,16 +4,16 @@ import { EmptyState } from "./empty-state";
 import { Count, Panel } from "./panel";
 
 const fileStatusStyles: Record<string, { label: string; className: string }> = {
-  added: { label: "A", className: "border-emerald-200 bg-emerald-50 text-emerald-700" },
-  removed: { label: "D", className: "border-red-200 bg-red-50 text-red-700" },
-  modified: { label: "M", className: "border-amber-200 bg-amber-50 text-amber-700" },
-  renamed: { label: "R", className: "border-blue-200 bg-blue-50 text-blue-700" },
-  copied: { label: "C", className: "border-blue-200 bg-blue-50 text-blue-700" },
+  added: { label: "A", className: "text-emerald-700" },
+  removed: { label: "D", className: "text-red-700" },
+  modified: { label: "M", className: "text-zinc-600" },
+  renamed: { label: "R", className: "text-zinc-600" },
+  copied: { label: "C", className: "text-zinc-600" },
 };
 
 const defaultFileStatus = {
   label: "•",
-  className: "border-zinc-200 bg-zinc-50 text-zinc-600",
+  className: "text-zinc-500",
 };
 
 export function ChangedFilesPanel({
@@ -38,9 +38,9 @@ export function ChangedFilesPanel({
       }
       actions={
         files.length > 0 && (
-          <span className="font-mono text-xs tabular-nums">
-            <span className="text-emerald-600">+{additions}</span>{" "}
-            <span className="text-red-600">−{deletions}</span>
+          <span className="text-[13px] tabular-nums">
+            <span className="text-emerald-700">+{additions}</span>{" "}
+            <span className="text-red-700">−{deletions}</span>
           </span>
         )
       }
@@ -81,7 +81,7 @@ function ChangedFileRow({
   return (
     <li id={fileAnchorId(file.filename)} className="scroll-mt-6">
       <details className="group" open={findings > 0 && Boolean(file.patch)}>
-        <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-2.5 transition-colors hover:row-cursor hover:bg-zinc-50 group-open:bg-zinc-50 sm:px-5 [&::-webkit-details-marker]:hidden">
+        <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3 transition-colors hover:bg-zinc-50 group-open:bg-zinc-50 sm:px-5 [&::-webkit-details-marker]:hidden">
           <svg
             aria-hidden="true"
             viewBox="0 0 16 16"
@@ -97,30 +97,30 @@ function ChangedFileRow({
 
           <span
             title={file.status}
-            className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-xs border font-mono text-[10px] font-semibold ${status.className}`}
+            className={`w-3 shrink-0 text-center text-xs font-semibold ${status.className}`}
           >
             {status.label}
           </span>
 
-          <span className="min-w-0 flex-1 truncate font-mono text-xs" title={file.filename}>
+          <span className="min-w-0 flex-1 truncate font-mono text-[12.5px]" title={file.filename}>
             <span className="text-zinc-400">{directory}</span>
             <span className="font-medium text-zinc-900">{basename}</span>
           </span>
 
           {findings > 0 && (
-            <span className="shrink-0 rounded-xs border border-amber-300 bg-amber-50 px-1.5 font-mono text-[10.5px] font-medium leading-4 text-amber-800">
+            <span className="shrink-0 rounded bg-mark px-1.5 text-xs font-semibold text-zinc-900">
               {pluralize(findings, "finding")}
             </span>
           )}
 
-          <span className="hidden shrink-0 items-center gap-2 font-mono text-[11px] tabular-nums sm:flex">
-            <span className="text-emerald-600">+{file.additions}</span>
-            <span className="text-red-600">−{file.deletions}</span>
+          <span className="hidden shrink-0 items-center gap-2 text-[12.5px] tabular-nums sm:flex">
+            <span className="text-emerald-700">+{file.additions}</span>
+            <span className="text-red-700">−{file.deletions}</span>
             <DiffStat additions={file.additions} deletions={file.deletions} />
           </span>
         </summary>
 
-        <div className="border-t border-zinc-200 px-4 py-3 sm:px-5">
+        <div className="border-t border-zinc-100 bg-zinc-50/60 px-4 py-3 sm:px-5">
           {file.patch ? (
             <DiffView patch={file.patch} />
           ) : (
@@ -151,7 +151,7 @@ function DiffStat({
       {Array.from({ length: blocks }, (_, index) => (
         <span
           key={index}
-          className={`h-2 w-1.5 ${
+          className={`h-2 w-1.5 rounded-[1px] ${
             index < added
               ? "bg-emerald-500"
               : index < added + removed
@@ -215,7 +215,7 @@ function DiffView({ patch }: { patch: string }) {
   const lines = parsePatch(patch);
 
   return (
-    <div className="max-h-128 overflow-auto rounded-sm border border-zinc-200 bg-white">
+    <div className="max-h-128 overflow-auto rounded-lg border border-zinc-200 bg-white">
       <table className="w-full border-collapse font-mono text-xs leading-5">
         <tbody>
           {lines.map((line, index) => (

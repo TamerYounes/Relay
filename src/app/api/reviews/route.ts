@@ -541,19 +541,10 @@ export async function POST(request: Request) {
 
   const { data: existingReview } = await supabase
     .from("reviews")
-    .select("id, status")
+    .select("id, status, commit_sha")
     .eq("repository_id", repository.id)
     .eq("github_pr_number", prNumber)
     .maybeSingle();
-
-  if (existingReview?.status === "completed") {
-    return NextResponse.json({
-      reviewId: existingReview.id,
-      status: "completed",
-      message:
-        "This pull request has already been reviewed.",
-    });
-  }
 
   const headers = {
     Authorization: `Bearer ${token}`,
@@ -585,6 +576,18 @@ export async function POST(request: Request) {
     }
 
     const pullRequest = await pullRequestResponse.json();
+
+    // Only re-review when new commits were pushed since the last review.
+    if (
+      existingReview?.status === "completed" &&
+      existingReview.commit_sha === (pullRequest.head?.sha ?? null)
+    ) {
+      return NextResponse.json({
+        reviewId: existingReview.id,
+        status: "completed",
+        message: "This commit has already been reviewed.",
+      });
+    }
 
     const filesResponse = await fetch(
       `https://api.github.com/repos/${repositoryPath}/pulls/${prNumber}/files?per_page=100`,

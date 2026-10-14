@@ -126,7 +126,7 @@ export function GitHubRepositoryPicker({
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-zinc-500">
+        <p className="text-[13px] text-zinc-600">
           {currentRepository ? (
             <>
               Current repository:{" "}
@@ -151,7 +151,7 @@ export function GitHubRepositoryPicker({
       </div>
 
       {open && (
-        <div className="mt-3 overflow-hidden rounded-sm border border-zinc-300 bg-white shadow-[0_1px_0_rgb(0_0_0/0.04)]">
+        <div className="mt-3 overflow-hidden rounded-xl bg-white shadow-(--shadow-raised)">
           <div className="flex items-center gap-2 border-b border-zinc-200 px-3 py-2">
             <svg
               aria-hidden="true"
@@ -268,12 +268,12 @@ export function GitHubRepositoryPicker({
                       </span>
 
                       {current && (
-                        <span className="eyebrow shrink-0 text-emerald-700">
+                        <span className="shrink-0 text-xs font-medium text-emerald-700">
                           Current
                         </span>
                       )}
 
-                      <span className="eyebrow shrink-0 rounded-xs border border-zinc-300 px-1 leading-4 text-zinc-500">
+                      <span className="shrink-0 text-xs text-zinc-500">
                         {repository.private ? "Private" : "Public"}
                       </span>
                     </button>

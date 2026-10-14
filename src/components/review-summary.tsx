@@ -1,4 +1,4 @@
-import { formatSeverity, severityOrder } from "@/lib/format";
+import { formatSeverity, pluralize, severityOrder } from "@/lib/format";
 import type { ReviewFinding, ReviewStatus } from "@/types/relay";
 import { RelativeTime } from "./relative-time";
 import { severityStyles } from "./severity-badge";
@@ -9,14 +9,18 @@ export function ReviewSummary({
   findings,
   completedAt,
   commitSha,
+  headSha,
 }: {
   status: ReviewStatus;
   findings: Pick<ReviewFinding, "severity">[];
   completedAt?: string | null;
   commitSha?: string | null;
+  /** Current head of the pull request, to tell whether the review is stale. */
+  headSha?: string | null;
 }) {
   const completed =
     status === "clean" || status === "reviewed" || status === "needs_attention";
+  const stale = Boolean(commitSha && headSha && commitSha !== headSha);
 
   const counts = severityOrder.map((severity) => ({
     severity,
@@ -24,53 +28,54 @@ export function ReviewSummary({
   }));
 
   return (
-    <section className="overflow-hidden rounded border border-zinc-200 bg-white">
-      <div className="flex items-center justify-between gap-3 border-b border-zinc-200 bg-zinc-50 px-4 py-2.5">
-        <h2 className="eyebrow text-zinc-500">Review</h2>
+    <section className="surface px-5 py-4">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-[14px] font-semibold text-zinc-900">Review</h2>
         <StatusBadge status={status} />
       </div>
 
       {completed ? (
         <>
-          <div className="px-4 pb-1 pt-4">
-            <p className="font-mono text-[28px] font-medium leading-none tabular-nums text-zinc-950">
-              {findings.length}
-            </p>
-            <p className="mt-1 text-xs text-zinc-500">
-              {findings.length === 1 ? "finding" : "findings"}
-            </p>
-
-            {findings.length > 0 && (
-              <div aria-hidden="true" className="mt-3 flex h-1.5 gap-px overflow-hidden">
-                {counts
-                  .filter(({ count }) => count > 0)
-                  .map(({ severity, count }) => (
-                    <span
-                      key={severity}
-                      className={severityStyles[severity].bar}
-                      style={{ flexGrow: count }}
-                    />
-                  ))}
-              </div>
+          <p className="mt-1.5 text-[13.5px] leading-5 text-zinc-600">
+            {pluralize(findings.length, "finding")}
+            {commitSha && (
+              <>
+                {" "}on{" "}
+                <span className="font-mono text-xs text-zinc-900">
+                  {commitSha.slice(0, 7)}
+                </span>
+              </>
             )}
-          </div>
+            {completedAt && (
+              <>
+                , <RelativeTime value={completedAt} />
+              </>
+            )}
+            .
+            {stale && " New commits were pushed since."}
+          </p>
 
-          <dl className="mt-2 border-t border-zinc-100">
-            {counts.map(({ severity, count }) => (
-              <div
-                key={severity}
-                className="flex items-center justify-between px-4 py-1.5"
-              >
-                <dt className="flex items-center gap-2 text-[13px] text-zinc-600">
+          {findings.length > 0 && (
+            <div aria-hidden="true" className="mt-4 flex h-2 gap-0.5 overflow-hidden rounded-full">
+              {counts
+                .filter(({ count }) => count > 0)
+                .map(({ severity, count }) => (
                   <span
-                    aria-hidden="true"
-                    className={`h-2 w-2 ${severityStyles[severity].bar}`}
+                    key={severity}
+                    className={severityStyles[severity].bar}
+                    style={{ flexGrow: count }}
                   />
-                  {formatSeverity(severity)}
-                </dt>
+                ))}
+            </div>
+          )}
+
+          <dl className="mt-3 grid grid-cols-[1fr_auto] gap-y-1.5 text-[13.5px]">
+            {counts.map(({ severity, count }) => (
+              <div key={severity} className="contents">
+                <dt className="text-zinc-700">{formatSeverity(severity)}</dt>
                 <dd
-                  className={`font-mono text-[13px] font-medium tabular-nums ${
-                    count > 0 ? severityStyles[severity].text : "text-zinc-300"
+                  className={`text-right font-semibold tabular-nums ${
+                    count > 0 ? severityStyles[severity].text : "font-normal text-zinc-400"
                   }`}
                 >
                   {count}
@@ -78,29 +83,14 @@ export function ReviewSummary({
               </div>
             ))}
           </dl>
-
-          {(completedAt || commitSha) && (
-            <div className="mt-1 space-y-0.5 border-t border-zinc-200 bg-zinc-50 px-4 py-2.5 font-mono text-[11px] text-zinc-500">
-              {completedAt && (
-                <p>
-                  reviewed <RelativeTime value={completedAt} />
-                </p>
-              )}
-              {commitSha && (
-                <p>
-                  at <span className="text-zinc-800">{commitSha.slice(0, 7)}</span>
-                </p>
-              )}
-            </div>
-          )}
         </>
       ) : (
-        <p className="px-4 py-3.5 text-[13px] leading-5 text-zinc-600">
+        <p className="mt-1.5 text-[13.5px] leading-5 text-zinc-600">
           {status === "running"
-            ? "A review is currently running."
+            ? "A review is running."
             : status === "failed"
-              ? "The last review didn't complete."
-              : "This pull request hasn't been reviewed by Relay yet."}
+              ? "The last review didn't finish. Run it again."
+              : "This pull request hasn't been reviewed yet."}
         </p>
       )}
     </section>

@@ -6,9 +6,12 @@ import { buttonStyles } from "./button-styles";
 export function RunReviewButton({
   prNumber,
   hasReview,
+  upToDate,
 }: {
   prNumber: number;
   hasReview: boolean;
+  /** True when the latest commit already has a completed review. */
+  upToDate: boolean;
 }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -38,7 +41,7 @@ export function RunReviewButton({
 
       setMessage(
         data.findingsCount !== undefined
-          ? `Review complete · ${data.findingsCount} finding${
+          ? `Review complete: ${data.findingsCount} finding${
               data.findingsCount === 1 ? "" : "s"
             }`
           : "Review complete",
@@ -73,7 +76,7 @@ export function RunReviewButton({
       <button
         type="button"
         onClick={runReview}
-        disabled={loading || hasReview}
+        disabled={loading || upToDate}
         className={buttonStyles.primary}
       >
         {loading && (
@@ -84,9 +87,11 @@ export function RunReviewButton({
         )}
         {loading
           ? "Reviewing..."
-          : hasReview
+          : upToDate
             ? "Reviewed"
-            : "Run review"}
+            : hasReview
+              ? "Review new commits"
+              : "Run review"}
       </button>
     </div>
   );

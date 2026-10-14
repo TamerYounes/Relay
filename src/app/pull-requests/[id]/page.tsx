@@ -1,17 +1,21 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { buttonStyles } from "@/components/button-styles";
 import { ChangedFilesPanel } from "@/components/changed-files-panel";
 import { FindingsList } from "@/components/findings-list";
-import { PullRequestIcon } from "@/components/pull-request-icon";
+import { Avatar } from "@/components/avatar";
+import { ExternalIcon } from "@/components/icons";
+import { Panel } from "@/components/panel";
 import { RelativeTime } from "@/components/relative-time";
 import { ReviewSummary } from "@/components/review-summary";
 import { RunReviewButton } from "@/components/run-review-button";
 import { getReviewStatus, pluralize } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { decryptToken } from "@/lib/github/encryption";
+import { fetchAllPages, githubHeaders } from "@/lib/github/api";
 
 type GitHubPullRequest = {
   number: number;
@@ -110,7 +114,9 @@ async function getRepositoryAndToken() {
   }
 }
 
-async function getPullRequest(id: string) {
+// Cached per request so generateMetadata and the page share one set of
+// GitHub calls.
+const getPullRequest = cache(async (id: string) => {
   const connection = await getRepositoryAndToken();
 
   if (!connection) {
@@ -119,11 +125,7 @@ async function getPullRequest(id: string) {
 
   const { supabase, repository, token } = connection;
 
-  const headers = {
-    Authorization: `Bearer ${token}`,
-    Accept: "application/vnd.github+json",
-    "X-GitHub-Api-Version": "2022-11-28",
-  };
+  const headers = githubHeaders(token);
 
   const repositoryPath = `${encodeURIComponent(
     repository.owner,
@@ -146,19 +148,14 @@ async function getPullRequest(id: string) {
   const pullRequest: GitHubPullRequest =
     await pullRequestResponse.json();
 
-  const filesResponse = await fetch(
+  // GitHub lists at most 3,000 files per pull request, 100 per page.
+  const files = await fetchAllPages<GitHubFile>(
     `https://api.github.com/repos/${repositoryPath}/pulls/${encodeURIComponent(
       id,
     )}/files?per_page=100`,
-    {
-      headers,
-      cache: "no-store",
-    },
-  );
-
-  const files: GitHubFile[] = filesResponse.ok
-    ? await filesResponse.json()
-    : [];
+    token,
+    30,
+  ).catch(() => [] as GitHubFile[]);
 
   const { data: review } = await supabase
     .from("reviews")
@@ -182,13 +179,12 @@ async function getPullRequest(id: string) {
   }
 
   return {
-    repository,
     pullRequest,
     files,
     review,
     findings,
   };
-}
+});
 
 export async function generateMetadata(
   props: PageProps<"/pull-requests/[id]">,
@@ -220,7 +216,6 @@ export default async function PullRequestDetailPage(
   }
 
   const {
-    repository,
     pullRequest,
     files,
     review,
@@ -239,83 +234,50 @@ export default async function PullRequestDetailPage(
 
   return (
     <AppShell>
-      <main className="space-y-6">
-        <nav
-          aria-label="Breadcrumb"
-          className="flex min-w-0 items-center gap-1.5 font-mono text-xs text-zinc-500"
-        >
-          <Link
-            href="/"
-            className="shrink-0 font-medium transition-colors hover:text-zinc-950"
-          >
+      <main className="space-y-7">
+        <nav aria-label="Breadcrumb" className="text-[13px] text-zinc-600">
+          <Link href="/" className="transition-colors hover:text-zinc-900">
             Pull requests
           </Link>
-          <span aria-hidden="true" className="text-zinc-300">
-            /
-          </span>
-          <span className="truncate font-mono">{repository.full_name}</span>
-          <span aria-hidden="true" className="text-zinc-300">
-            /
-          </span>
-          <span className="shrink-0 font-mono text-zinc-700">
-            #{pullRequest.number}
-          </span>
         </nav>
 
-        <header className="border-b border-zinc-300 pb-5">
+        <header>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="min-w-0">
-              <h1 className="wrap-break-word text-[22px] font-semibold leading-tight tracking-[-0.02em] text-zinc-950 sm:text-[26px]">
+            <div className="min-w-0 max-w-3xl">
+              <h1 className="wrap-break-word text-[26px] font-bold leading-tight tracking-[-0.03em] text-zinc-900 sm:text-[30px]">
                 {pullRequest.title}{" "}
-                <span className="font-mono text-[0.8em] font-normal text-zinc-400">
+                <span className="font-normal text-zinc-400">
                   #{pullRequest.number}
                 </span>
               </h1>
 
-              <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-2 text-[13px] text-zinc-500">
+              <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-2 text-[14px] text-zinc-600">
                 <span
-                  className={`inline-flex h-6 items-center gap-1.5 rounded-xs border px-2 font-mono text-[11px] font-semibold uppercase tracking-wide ${
+                  className={`inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-[12.5px] font-semibold ${
                     pullRequest.draft
-                      ? "border-zinc-300 bg-zinc-100 text-zinc-600"
-                      : "border-emerald-700 bg-emerald-700 text-white [&_svg]:text-white"
+                      ? "bg-zinc-100 text-zinc-700"
+                      : "bg-emerald-600 text-white"
                   }`}
                 >
-                  <PullRequestIcon
-                    draft={pullRequest.draft}
-                    className="h-3.5 w-3.5"
-                  />
                   {pullRequest.draft ? "Draft" : "Open"}
                 </span>
 
-                <span className="inline-flex items-center gap-1.5">
-                  {pullRequest.user?.avatar_url && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={pullRequest.user.avatar_url}
-                      alt=""
-                      width={18}
-                      height={18}
-                      className="h-4.5 w-4.5 rounded-xs"
-                    />
-                  )}
-                  <span className="font-medium text-zinc-800">
-                    {pullRequest.user?.login ?? "Unknown"}
+                <span className="inline-flex items-center gap-2">
+                  <Avatar
+                    name={pullRequest.user?.login ?? "?"}
+                    src={pullRequest.user?.avatar_url}
+                    size={22}
+                  />
+                  <span>
+                    <span className="font-semibold text-zinc-900">
+                      {pullRequest.user?.login ?? "Unknown"}
+                    </span>{" "}
+                    wants to merge
                   </span>
                 </span>
-
-                <span>wants to merge into</span>
-
-                <span className="inline-flex min-w-0 items-center gap-1 font-mono text-xs">
-                  <span className="max-w-40 truncate rounded-xs border border-zinc-300 bg-white px-1.5 py-0.5 text-zinc-800">
-                    {pullRequest.base?.ref}
-                  </span>
-                  <span aria-hidden="true" className="text-zinc-400">
-                    ←
-                  </span>
-                  <span className="max-w-56 truncate rounded-xs border border-zinc-300 bg-white px-1.5 py-0.5 text-zinc-800">
-                    {pullRequest.head?.ref}
-                  </span>
-                </span>
+                <BranchName>{pullRequest.head?.ref}</BranchName>
+                <span>into</span>
+                <BranchName>{pullRequest.base?.ref}</BranchName>
               </div>
             </div>
 
@@ -327,30 +289,29 @@ export default async function PullRequestDetailPage(
                 className={buttonStyles.secondary}
               >
                 Open on GitHub
-                <span aria-hidden="true" className="text-zinc-400">
-                  ↗
-                </span>
+                <ExternalIcon className="h-3.5 w-3.5 text-zinc-400" />
               </a>
 
               <RunReviewButton
                 prNumber={pullRequest.number}
+                upToDate={
+                  review?.status === "completed" &&
+                  review.commit_sha === pullRequest.head?.sha
+                }
                 hasReview={review?.status === "completed"}
               />
             </div>
           </div>
         </header>
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_17rem]">
-          <div className="min-w-0 space-y-6">
+        <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_18rem]">
+          <div className="min-w-0 space-y-8">
             {pullRequest.body && (
-              <section className="overflow-hidden rounded border border-zinc-200 bg-white">
-                <h2 className="eyebrow border-b border-zinc-200 bg-zinc-50 px-4 py-2.5 text-zinc-500 sm:px-5">
-                  Description
-                </h2>
-                <p className="max-h-80 overflow-y-auto whitespace-pre-wrap wrap-break-word px-4 py-3 text-[13px] leading-6 text-zinc-700 sm:px-5">
+              <Panel title="Description">
+                <p className="max-h-80 overflow-y-auto whitespace-pre-wrap wrap-break-word px-4 py-3.5 text-[14px] leading-6 text-zinc-700 sm:px-5">
                   {pullRequest.body}
                 </p>
-              </section>
+              </Panel>
             )}
 
             <FindingsList findings={findings} status={reviewStatus} />
@@ -364,14 +325,15 @@ export default async function PullRequestDetailPage(
               findings={findings}
               completedAt={review?.completed_at}
               commitSha={review?.commit_sha}
+              headSha={pullRequest.head?.sha}
             />
 
-            <section className="overflow-hidden rounded border border-zinc-200 bg-white">
-              <h2 className="eyebrow border-b border-zinc-200 bg-zinc-50 px-4 py-2.5 text-zinc-500">
+            <section className="surface px-5 py-4">
+              <h2 className="text-[14px] font-semibold text-zinc-900">
                 Details
               </h2>
 
-              <dl className="divide-y divide-zinc-100 text-[13px]">
+              <dl className="mt-2 space-y-2 text-[13.5px]">
                 <DetailRow label="Author">
                   {pullRequest.user?.login ?? "Unknown"}
                 </DetailRow>
@@ -385,11 +347,11 @@ export default async function PullRequestDetailPage(
                   {pluralize(pullRequest.changed_files, "file")}
                 </DetailRow>
                 <DetailRow label="Changes">
-                  <span className="font-mono text-xs tabular-nums">
-                    <span className="text-emerald-600">
+                  <span className="tabular-nums">
+                    <span className="text-emerald-700">
                       +{pullRequest.additions}
                     </span>{" "}
-                    <span className="text-red-600">
+                    <span className="text-red-700">
                       −{pullRequest.deletions}
                     </span>
                   </span>
@@ -411,11 +373,19 @@ function DetailRow({
   children: ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 px-4 py-2">
-      <dt className="text-[13px] text-zinc-500">{label}</dt>
-      <dd className="min-w-0 truncate text-right font-mono text-xs text-zinc-800">
+    <div className="flex items-center justify-between gap-3">
+      <dt className="text-zinc-600">{label}</dt>
+      <dd className="min-w-0 truncate text-right text-zinc-900">
         {children}
       </dd>
     </div>
+  );
+}
+
+function BranchName({ children }: { children: ReactNode }) {
+  return (
+    <span className="max-w-56 truncate rounded-md bg-white px-2 py-0.5 font-mono text-[12.5px] text-zinc-900 shadow-(--shadow-card)">
+      {children}
+    </span>
   );
 }

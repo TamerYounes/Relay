@@ -1,44 +1,49 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f2f1ec;
-  --foreground: #1a1917;
+  --background: #f3f4f6;
+  --foreground: #16181d;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
-  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-plex-mono), ui-monospace, "SFMono-Regular", monospace;
+  --font-sans: var(--font-schibsted), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "SFMono-Regular", monospace;
 }
 
 @theme {
   /*
-   * Warm graphite neutrals. Overriding zinc re-tints every neutral in the app
-   * at once, so components keep using the standard zinc-* utilities.
+   * Cool neutrals. Overriding zinc re-tints every neutral in the app at once,
+   * so components keep using the standard zinc-* utilities.
    */
-  --color-zinc-50: #f9f8f5;
-  --color-zinc-100: #f0eee9;
-  --color-zinc-200: #e2dfd7;
-  --color-zinc-300: #cdc9bf;
-  --color-zinc-400: #a19d93;
-  --color-zinc-500: #77736a;
-  --color-zinc-600: #5b5851;
-  --color-zinc-700: #44423d;
-  --color-zinc-800: #2c2b28;
-  --color-zinc-900: #1c1b19;
-  --color-zinc-950: #131311;
+  --color-zinc-50: #f8f9fa;
+  --color-zinc-100: #f1f2f5;
+  --color-zinc-200: #e3e6eb;
+  --color-zinc-300: #cfd3da;
+  --color-zinc-400: #a3a8b2;
+  --color-zinc-500: #737a87;
+  --color-zinc-600: #5b6270;
+  --color-zinc-700: #3a3f49;
+  --color-zinc-800: #272b33;
+  --color-zinc-900: #16181d;
+  --color-zinc-950: #0f1115;
 
-  /* Sidebar / chrome */
-  --color-ink: #161614;
-  --color-ink-raised: #201f1c;
-  --color-ink-line: #2f2e2a;
-  --color-ink-muted: #8d8a81;
+  /* Borders on white surfaces. */
+  --color-line: #dce0e5;
 
-  /* The one accent. Only ever used on ink surfaces or as a fill behind ink text. */
-  --color-signal: #c5f03c;
-  --color-signal-dim: #a8d11f;
+  /*
+   * The one accent: a highlighter. Only marks things that need a person
+   * (attention counts, the "needs you" group, files with findings).
+   */
+  --color-mark: #ffe066;
+  --color-mark-soft: #fff7d1;
+
+  --shadow-card: 0 0 0 1px rgb(22 24 29 / 0.07), 0 1px 2px rgb(22 24 29 / 0.05),
+    0 6px 16px -6px rgb(22 24 29 / 0.08);
+  --shadow-raised: 0 0 0 1px rgb(22 24 29 / 0.09), 0 2px 4px rgb(22 24 29 / 0.06),
+    0 12px 28px -8px rgb(22 24 29 / 0.14);
 }
 
 body {
@@ -48,16 +53,21 @@ body {
   font-size: 14px;
 }
 
-/* Small uppercase mono label used for section headings, metric labels, etc. */
-@utility eyebrow {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
+/* Small muted label for section and field names. Sentence case. */
+@utility meta-label {
+  font-size: 12.5px;
   font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  color: var(--color-zinc-600);
 }
 
-/* Left "cursor" marker shown on hovered/focused list rows. */
+/* White content surface with soft layered depth. */
+@utility surface {
+  background: #fff;
+  border-radius: 0.875rem;
+  box-shadow: var(--shadow-card);
+}
+
+/* Left marker shown on hovered/focused list rows. */
 @utility row-cursor {
   box-shadow: inset 2px 0 0 var(--color-zinc-900);
 }
@@ -68,10 +78,6 @@ body {
 }
 
 ::selection {
-  background: var(--color-signal);
-  color: var(--color-ink);
-}
-
-[data-surface="ink"] :focus-visible {
-  outline-color: var(--color-signal);
+  background: var(--color-mark);
+  color: var(--color-zinc-900);
 }

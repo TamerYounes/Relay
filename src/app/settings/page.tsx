@@ -50,15 +50,13 @@ export default async function SettingsPage({
 
   return (
     <AppShell>
-      <main className="max-w-3xl space-y-6">
-        <header className="border-b border-zinc-300 pb-5">
-          <p className="eyebrow text-zinc-500">Workspace</p>
-
-          <h1 className="mt-1.5 text-[26px] font-semibold leading-tight tracking-[-0.02em] text-zinc-950">
+      <main className="max-w-3xl space-y-8">
+        <header>
+          <h1 className="text-[30px] font-bold leading-tight tracking-[-0.025em] text-zinc-900">
             Settings
           </h1>
 
-          <p className="mt-1 text-[13px] text-zinc-600">
+          <p className="mt-2 text-[15px] text-zinc-600">
             Manage your GitHub connection, repository and workspace.
           </p>
         </header>
@@ -66,7 +64,7 @@ export default async function SettingsPage({
         {params.github === "connected" && (
           <div
             role="status"
-            className="flex items-center gap-2.5 rounded-sm border border-emerald-200 border-l-[3px] border-l-emerald-600 bg-white px-4 py-2.5"
+            className="flex items-center gap-2.5 rounded-md bg-emerald-50 px-4 py-2.5"
           >
             <p className="text-[13px] font-medium text-zinc-900">
               GitHub connected successfully.
@@ -77,7 +75,7 @@ export default async function SettingsPage({
         {params.github === "error" && (
           <div
             role="alert"
-            className="flex items-center gap-2.5 rounded-sm border border-red-200 border-l-[3px] border-l-red-600 bg-white px-4 py-2.5"
+            className="flex items-center gap-2.5 rounded-md bg-red-50 px-4 py-2.5"
           >
             <p className="text-[13px] font-medium text-zinc-900">
               We couldn&apos;t connect GitHub. Please try again.
@@ -95,7 +93,7 @@ export default async function SettingsPage({
                 <div className="flex min-w-0 items-center gap-3">
                   <span
                     aria-hidden="true"
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ink font-mono text-sm font-semibold uppercase text-signal"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-sm font-semibold uppercase text-zinc-700"
                   >
                     {githubConnection.github_login?.charAt(0) ?? "?"}
                   </span>
@@ -106,7 +104,7 @@ export default async function SettingsPage({
                     </p>
 
                     <p className="mt-0.5 flex items-center gap-1.5 text-xs text-zinc-500">
-                      <span aria-hidden="true" className="h-1.5 w-1.5 bg-emerald-600" />
+                      <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
                       Connected
                       {githubConnection.created_at && (
                         <>
@@ -160,20 +158,20 @@ export default async function SettingsPage({
                 </SettingRow>
 
                 <SettingRow label="Default branch">
-                  <span className="rounded-xs border border-zinc-300 bg-white px-1.5 py-0.5 font-mono text-xs text-zinc-800">
+                  <span className="rounded border border-line bg-white px-1.5 py-px font-mono text-[12.5px] text-zinc-900">
                     {repository.default_branch}
                   </span>
                 </SettingRow>
 
                 <SettingRow label="Status">
                   <span className="inline-flex items-center gap-1.5 text-xs text-zinc-700">
-                    <span aria-hidden="true" className="h-1.5 w-1.5 bg-emerald-600" />
+                    <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
                     Connected
                   </span>
                 </SettingRow>
               </dl>
 
-              <div className="border-t border-zinc-200 bg-zinc-50 px-4 py-4 sm:px-5">
+              <div className="border-t border-zinc-100 px-4 py-4 sm:px-5">
                 <GitHubRepositoryPicker
                   currentRepository={repository.full_name}
                 />

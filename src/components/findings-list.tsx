@@ -23,7 +23,7 @@ export function FindingsList({
       id="findings"
       title={
         <>
-          Review findings
+          Findings
           {completed && <Count value={findings.length} />}
         </>
       }
@@ -38,7 +38,6 @@ export function FindingsList({
       {status === "not_reviewed" && (
         <EmptyState
           bare
-          label="Not reviewed"
           title="No review yet"
           description="Run a review to check the changed code for bugs, security issues and maintainability problems."
         />
@@ -47,7 +46,6 @@ export function FindingsList({
       {status === "running" && (
         <EmptyState
           bare
-          label="In progress"
           title="Review in progress"
           description="Relay is analyzing this pull request. Refresh the page in a moment to see the results."
         />
@@ -65,14 +63,13 @@ export function FindingsList({
       {completed && findings.length === 0 && (
         <EmptyState
           bare
-          label="Clean"
           title="No issues found"
           description="Relay didn't detect any issues in the changed code."
         />
       )}
 
       {completed && findings.length > 0 && (
-        <div className="divide-y divide-zinc-200">
+        <div className="divide-y divide-zinc-100">
           {sortedFindings.map((finding) => (
             <FindingCard key={finding.id} finding={finding} linkToFile />
           ))}

@@ -17,14 +17,12 @@ export default function Error({
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-md rounded border border-zinc-200 border-l-[3px] border-l-red-600 bg-white p-6">
-        <p className="eyebrow text-red-700">Error</p>
-
-        <h1 className="mt-1.5 text-[17px] font-semibold text-zinc-950">
+      <div className="w-full max-w-md surface p-6">
+        <h1 className="text-[18px] font-semibold text-zinc-900">
           Something went wrong
         </h1>
 
-        <p className="mt-1 text-[13px] leading-5 text-zinc-500">
+        <p className="mt-1.5 text-[14px] leading-6 text-zinc-600">
           Relay hit an unexpected error while loading this page. Try again, or
           head back to your pull requests.
         </p>
