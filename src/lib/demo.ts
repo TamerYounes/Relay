@@ -14,6 +14,14 @@ export function isDemoUser(email: string | null | undefined) {
   return Boolean(demoEmail && email && email.toLowerCase() === demoEmail.toLowerCase());
 }
 
+/**
+ * Lets the demo account run reviews, so its findings can be generated
+ * locally with Ollama. Only ever set in a local .env.local, never on Vercel.
+ */
+export function demoReviewsAllowed() {
+  return process.env.DEMO_ALLOW_REVIEWS === "true" && !process.env.VERCEL;
+}
+
 export function demoReadOnlyResponse() {
   return NextResponse.json(
     { error: "The demo is read-only." },

@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getOllamaUrl } from "@/lib/ai-review";
-import { demoReadOnlyResponse, isDemoUser } from "@/lib/demo";
-import { decryptToken } from "@/lib/github/encryption";
+import {
+  demoReadOnlyResponse,
+  demoReviewsAllowed,
+  getGitHubToken,
+  isDemoUser,
+} from "@/lib/demo";
 
 type GitHubFile = {
   filename: string;
@@ -435,7 +439,7 @@ export async function POST(request: Request) {
     );
   }
 
-  if (isDemoUser(user.email)) {
+  if (isDemoUser(user.email) && !demoReviewsAllowed()) {
     return demoReadOnlyResponse();
   }
 
@@ -524,30 +528,21 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data: connection, error: connectionError } =
-    await supabase
-      .from("github_connections")
-      .select("access_token_encrypted")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-  if (connectionError || !connection) {
-    return NextResponse.json(
-      { error: "GitHub is not connected." },
-      { status: 400 },
-    );
-  }
-
-  let token: string;
+  let token: string | null = null;
 
   try {
-    token = decryptToken(
-      connection.access_token_encrypted,
-    );
+    token = await getGitHubToken(supabase, user);
   } catch {
     return NextResponse.json(
       { error: "Unable to decrypt GitHub connection." },
       { status: 500 },
+    );
+  }
+
+  if (!token) {
+    return NextResponse.json(
+      { error: "GitHub is not connected." },
+      { status: 400 },
     );
   }
 

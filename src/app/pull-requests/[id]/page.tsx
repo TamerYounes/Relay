@@ -15,7 +15,7 @@ import { RunReviewButton } from "@/components/run-review-button";
 import { getReviewStatus, pluralize } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
 import { aiReviewEnabled } from "@/lib/ai-review";
-import { getGitHubToken, isDemoUser } from "@/lib/demo";
+import { demoReviewsAllowed, getGitHubToken, isDemoUser } from "@/lib/demo";
 import { fetchAllPages, githubHeaders } from "@/lib/github/api";
 
 type GitHubPullRequest = {
@@ -102,7 +102,12 @@ async function getRepositoryAndToken() {
     const token = await getGitHubToken(supabase, user);
 
     return token
-      ? { supabase, repository, token, demo: isDemoUser(user.email) }
+      ? {
+          supabase,
+          repository,
+          token,
+          demo: isDemoUser(user.email) && !demoReviewsAllowed(),
+        }
       : null;
   } catch {
     return null;
