@@ -10,6 +10,8 @@ type AppShellFrameProps = {
   /** `undefined` renders a loading placeholder. */
   repositoryName?: string | null;
   email?: string | null;
+  /** Show the read-only demo notice. */
+  demo?: boolean;
 };
 
 /**
@@ -20,6 +22,7 @@ export function AppShellFrame({
   children,
   repositoryName,
   email,
+  demo = false,
 }: AppShellFrameProps) {
   return (
     <div className="min-h-screen bg-background text-ink">
@@ -63,6 +66,20 @@ export function AppShellFrame({
               <SidebarNav orientation="horizontal" />
             </div>
           </header>
+
+          {demo && (
+            <p className="border-b border-line bg-surface px-4 py-2 text-center text-[13px] text-ink-muted sm:px-6">
+              You&apos;re viewing a read-only demo with a sample repository.{" "}
+              <a
+                href="https://github.com/TamerYounes/Relay"
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-accent hover:underline"
+              >
+                Source on GitHub
+              </a>
+            </p>
+          )}
 
           <div className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 lg:px-12 lg:py-10">
             {children}

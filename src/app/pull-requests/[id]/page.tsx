@@ -14,7 +14,8 @@ import { ReviewSummary } from "@/components/review-summary";
 import { RunReviewButton } from "@/components/run-review-button";
 import { getReviewStatus, pluralize } from "@/lib/format";
 import { createClient } from "@/lib/supabase/server";
-import { decryptToken } from "@/lib/github/encryption";
+import { aiReviewEnabled } from "@/lib/ai-review";
+import { getGitHubToken, isDemoUser } from "@/lib/demo";
 import { fetchAllPages, githubHeaders } from "@/lib/github/api";
 
 type GitHubPullRequest = {
@@ -93,22 +94,16 @@ async function getRepositoryAndToken() {
     .eq("id", workspace.selected_repository_id)
     .maybeSingle();
 
-  const { data: connection } = await supabase
-    .from("github_connections")
-    .select("access_token_encrypted")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (!repository || !connection) {
+  if (!repository) {
     return null;
   }
 
   try {
-    return {
-      supabase,
-      repository,
-      token: decryptToken(connection.access_token_encrypted),
-    };
+    const token = await getGitHubToken(supabase, user);
+
+    return token
+      ? { supabase, repository, token, demo: isDemoUser(user.email) }
+      : null;
   } catch {
     return null;
   }
@@ -123,7 +118,7 @@ const getPullRequest = cache(async (id: string) => {
     return null;
   }
 
-  const { supabase, repository, token } = connection;
+  const { supabase, repository, token, demo } = connection;
 
   const headers = githubHeaders(token);
 
@@ -183,6 +178,7 @@ const getPullRequest = cache(async (id: string) => {
     files,
     review,
     findings,
+    demo,
   };
 });
 
@@ -220,6 +216,7 @@ export default async function PullRequestDetailPage(
     files,
     review,
     findings,
+    demo,
   } = result;
 
   const reviewStatus = getReviewStatus(review?.status, findings);
@@ -292,6 +289,7 @@ export default async function PullRequestDetailPage(
                 <ExternalIcon className="h-3.5 w-3.5 text-ink-faint" />
               </a>
 
+              {!demo && (
               <RunReviewButton
                 prNumber={pullRequest.number}
                 upToDate={
@@ -300,6 +298,7 @@ export default async function PullRequestDetailPage(
                 }
                 hasReview={review?.status === "completed"}
               />
+              )}
             </div>
           </div>
         </header>
@@ -327,6 +326,14 @@ export default async function PullRequestDetailPage(
               commitSha={review?.commit_sha}
               headSha={pullRequest.head?.sha}
             />
+
+            {!aiReviewEnabled() && (
+              <p className="px-1 text-[12.5px] leading-5 text-ink-faint">
+                AI findings here were generated locally with qwen2.5-coder
+                through Ollama. Reviews started on this site run the
+                rule-based checks only.
+              </p>
+            )}
 
             <section className="surface px-5 py-4">
               <h2 className="text-[14px] font-semibold text-ink">

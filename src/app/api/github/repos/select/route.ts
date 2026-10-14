@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { demoReadOnlyResponse, isDemoUser } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/server";
 import { decryptToken } from "@/lib/github/encryption";
 
@@ -14,6 +15,10 @@ export async function POST(request: Request) {
       { error: "Unauthorized" },
       { status: 401 },
     );
+  }
+
+  if (isDemoUser(user.email)) {
+    return demoReadOnlyResponse();
   }
 
   let body: {

@@ -1,7 +1,19 @@
 import crypto from "crypto";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { isDemoUser } from "@/lib/demo";
+import { createClient } from "@/lib/supabase/server";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // The read-only demo can't connect a GitHub account.
+  if (isDemoUser(user?.email)) {
+    return NextResponse.redirect(new URL("/settings", request.url));
+  }
+
   const clientId = process.env.GITHUB_CLIENT_ID;
   const redirectUri = process.env.GITHUB_REDIRECT_URI;
 

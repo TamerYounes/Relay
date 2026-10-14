@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { isDemoUser } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/server";
 import { AppShellFrame } from "./app-shell-frame";
 
@@ -32,7 +33,11 @@ export async function AppShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AppShellFrame repositoryName={repositoryName} email={user?.email ?? null}>
+    <AppShellFrame
+      repositoryName={repositoryName}
+      email={user?.email ?? null}
+      demo={isDemoUser(user?.email)}
+    >
       {children}
     </AppShellFrame>
   );

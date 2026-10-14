@@ -4,6 +4,7 @@ import { AppShell } from "@/components/app-shell";
 import { buttonStyles } from "@/components/button-styles";
 import { Panel } from "@/components/panel";
 import { RelativeTime } from "@/components/relative-time";
+import { isDemoUser } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/server";
 import { GitHubRepositoryPicker } from "@/components/github-repository-picker";
 import { GitHubConnectionControls } from "@/components/github-connection-controls";
@@ -48,15 +49,17 @@ export default async function SettingsPage({
     .eq("user_id", user?.id ?? "")
     .maybeSingle();
 
+  const demo = isDemoUser(user?.email);
+
   return (
     <AppShell>
       <main className="max-w-3xl space-y-8">
         <header>
-          <h1 className="text-[30px] font-bold leading-tight tracking-[-0.025em] text-ink">
+          <h1 className="text-[26px] font-bold leading-tight tracking-[-0.02em] text-ink sm:text-[28px]">
             Settings
           </h1>
 
-          <p className="mt-2 text-[15px] text-ink-muted">
+          <p className="mt-1 text-[14px] text-ink-muted">
             Manage your GitHub connection, repository and workspace.
           </p>
         </header>
@@ -88,7 +91,13 @@ export default async function SettingsPage({
           description="Relay uses your GitHub account to read repositories and pull requests."
         >
           <div className="px-4 py-4 sm:px-5">
-            {githubConnection ? (
+            {demo ? (
+              <p className="text-[13.5px] leading-6 text-ink-soft">
+                The demo reads pull requests with a read-only GitHub token that
+                can only see the sample repository. Connecting an account is
+                turned off.
+              </p>
+            ) : githubConnection ? (
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex min-w-0 items-center gap-3">
                   <span
@@ -171,11 +180,13 @@ export default async function SettingsPage({
                 </SettingRow>
               </dl>
 
-              <div className="border-t border-line px-4 py-4 sm:px-5">
-                <GitHubRepositoryPicker
-                  currentRepository={repository.full_name}
-                />
-              </div>
+              {!demo && (
+                <div className="border-t border-line px-4 py-4 sm:px-5">
+                  <GitHubRepositoryPicker
+                    currentRepository={repository.full_name}
+                  />
+                </div>
+              )}
             </>
           ) : (
             <div className="px-4 py-4 sm:px-5">

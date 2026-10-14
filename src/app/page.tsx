@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/empty-state";
 import { getReview, PullRequestList, triageGroups } from "@/components/pr-list";
 import { TriageOverview } from "@/components/triage-overview";
 import { createClient } from "@/lib/supabase/server";
-import { decryptToken } from "@/lib/github/encryption";
+import { getGitHubToken, isDemoUser } from "@/lib/demo";
 import { githubHeaders } from "@/lib/github/api";
 import { getHighestSeverity, getReviewStatus, pluralize } from "@/lib/format";
 import type {
@@ -100,13 +100,16 @@ export default async function Home() {
     );
   }
 
-  const { data: connection } = await supabase
-    .from("github_connections")
-    .select("access_token_encrypted")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  const demo = isDemoUser(user.email);
+  let token: string | null = null;
 
-  if (!connection) {
+  try {
+    token = await getGitHubToken(supabase, user);
+  } catch (error) {
+    console.error("Failed to read GitHub connection:", error);
+  }
+
+  if (!token) {
     return (
       <AppShell>
         <main className="space-y-7">
@@ -130,8 +133,6 @@ export default async function Home() {
   let githubStatus: number | null = null;
 
   try {
-    const token = decryptToken(connection.access_token_encrypted);
-
     const response = await fetch(
       `https://api.github.com/repos/${encodeURIComponent(
         repository.owner,
@@ -166,7 +167,7 @@ export default async function Home() {
       return (
         <AppShell>
           <main className="space-y-7">
-            <DashboardHeader repository={repository} />
+            <DashboardHeader repository={repository} readOnly={demo} />
 
             <EmptyState
               tone="danger"
@@ -191,7 +192,7 @@ export default async function Home() {
     return (
       <AppShell>
         <main className="space-y-7">
-          <DashboardHeader repository={repository} />
+          <DashboardHeader repository={repository} readOnly={demo} />
 
           <EmptyState
             tone="danger"
@@ -248,6 +249,7 @@ export default async function Home() {
       <main className="space-y-7">
         <DashboardHeader
           repository={repository}
+          readOnly={demo}
           summary={
             pullRequests.length === 0 ? (
               <>

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getOllamaUrl } from "@/lib/ai-review";
+import { demoReadOnlyResponse, isDemoUser } from "@/lib/demo";
 import { decryptToken } from "@/lib/github/encryption";
 
 type GitHubFile = {
@@ -315,9 +317,15 @@ PULL REQUEST DIFF:
 ${limitedDiff}
 `;
 
+  const ollamaUrl = getOllamaUrl();
+
+  if (!ollamaUrl) {
+    return [];
+  }
+
   try {
     const response = await fetch(
-      "http://127.0.0.1:11434/api/generate",
+      `${ollamaUrl}/api/generate`,
       {
         method: "POST",
         headers: {
@@ -425,6 +433,10 @@ export async function POST(request: Request) {
       { error: "Unauthorized" },
       { status: 401 },
     );
+  }
+
+  if (isDemoUser(user.email)) {
+    return demoReadOnlyResponse();
   }
 
   let body: { prNumber?: number };

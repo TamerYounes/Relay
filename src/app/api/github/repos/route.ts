@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { demoReadOnlyResponse, isDemoUser } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/server";
 import { decryptToken } from "@/lib/github/encryption";
 import { fetchAllPages, GitHubError } from "@/lib/github/api";
@@ -15,6 +16,10 @@ export async function GET() {
       { error: "Unauthorized" },
       { status: 401 },
     );
+  }
+
+  if (isDemoUser(user.email)) {
+    return demoReadOnlyResponse();
   }
 
   const { data: connection, error: connectionError } = await supabase

@@ -12,12 +12,15 @@ type DashboardHeaderProps = {
   title?: ReactNode;
   /** One-line summary under the title. */
   summary?: ReactNode;
+  /** Hide actions that change settings (the read-only demo). */
+  readOnly?: boolean;
 };
 
 export function DashboardHeader({
   repository,
   title = "Pull requests",
   summary,
+  readOnly = false,
 }: DashboardHeaderProps) {
   return (
     <header className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
@@ -35,9 +38,11 @@ export function DashboardHeader({
 
       {repository && (
         <div className="flex shrink-0 items-center gap-2">
-          <Link href="/settings" className={buttonStyles.secondary}>
-            Change repository
-          </Link>
+          {!readOnly && (
+            <Link href="/settings" className={buttonStyles.secondary}>
+              Change repository
+            </Link>
+          )}
           <a
             href={`https://github.com/${repository.full_name}/pulls`}
             target="_blank"

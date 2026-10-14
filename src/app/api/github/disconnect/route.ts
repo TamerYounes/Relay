@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { demoReadOnlyResponse, isDemoUser } from "@/lib/demo";
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST() {
@@ -13,6 +14,10 @@ export async function POST() {
       { error: "Unauthorized" },
       { status: 401 },
     );
+  }
+
+  if (isDemoUser(user.email)) {
+    return demoReadOnlyResponse();
   }
 
   const { error } = await supabase
