@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Relay
 
-## Getting Started
+Relay reviews GitHub pull requests. Connect a repository and it lists the open PRs, runs a review on the changed code, and sorts everything into what needs you, what's waiting for a review, and what's already been reviewed.
 
-First, run the development server:
+**Live:** [relay-three-bice.vercel.app](https://relay-three-bice.vercel.app). Use **Try the demo** on the sign-in page to look around without an account.
+
+![Pull requests dashboard](docs/screenshots/dashboard.png)
+
+![Pull request with review findings](docs/screenshots/pull-request.png)
+
+_Screenshots use the read-only demo account._
+
+## How a review works
+
+When you run a review on a pull request, Relay fetches its diff from GitHub and runs two passes over the changed lines:
+
+1. **Rule-based checks.** Pattern checks for hardcoded secrets, `eval()`, raw HTML injection, leftover debug logging and TODO/FIXME markers.
+2. **AI review.** The diff goes to a local model, `qwen2.5-coder:7b` through [Ollama](https://ollama.com), with a prompt that asks for real bugs and security problems only, as JSON. Each finding is validated and normalized before it's saved.
+
+Findings from both passes are de-duplicated and stored with the commit they were reviewed at. If new commits are pushed later, the PR page says so and offers to review them.
+
+The AI pass runs against a local Ollama server, so it's on when Relay runs on your machine and off on the hosted site. The AI findings in the demo were generated locally and saved; reviews started on the hosted site run the rule-based checks only.
+
+## Stack
+
+- Next.js 16 (App Router, server components, route handlers), React 19, TypeScript
+- Tailwind CSS 4
+- Supabase: email auth and Postgres, with row-level security on every table
+- GitHub OAuth; access tokens are encrypted with AES-256-GCM before they're stored
+- Ollama for the AI review
+- Docker for running a production build locally, Vercel for hosting
+
+## Running it locally
+
+You need Node 22, a Supabase project and a GitHub OAuth app.
 
 ```bash
+npm install
+cp .env.example .env.local   # then fill it in
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+For the AI review, install Ollama and pull the model:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+ollama pull qwen2.5-coder:7b
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+To run a production build in Docker instead:
 
-## Learn More
+```bash
+docker compose --env-file .env.local up --build
+```
 
-To learn more about Next.js, take a look at the following resources:
+### Environment variables
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Variable | What it's for |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase project |
+| `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `GITHUB_REDIRECT_URI` | GitHub OAuth app |
+| `GITHUB_TOKEN_ENCRYPTION_KEY` | 64 hex characters, encrypts stored GitHub tokens |
+| `OLLAMA_URL` | Optional. Defaults to `http://127.0.0.1:11434` locally and is off on Vercel |
+| `NEXT_PUBLIC_DEMO_ENABLED` | `true` to show **Try the demo** |
+| `DEMO_EMAIL`, `DEMO_PASSWORD` | The demo account. Sign-in happens on the server |
+| `DEMO_GITHUB_TOKEN` | Read-only GitHub token for the demo repository |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## The demo account
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The demo is read-only at two levels. The app blocks reviews, repository changes and GitHub connections for it, and the database blocks every write for workspaces marked `read_only` (see `supabase/migrations`). It reads GitHub with its own token that can only see the public [relay-demo](https://github.com/TamerYounes/relay-demo) repository, never a real user's connection.
