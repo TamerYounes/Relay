@@ -23,7 +23,7 @@ The review code lives in `src/lib/review` and has no database or Next.js depende
 
 Findings from both passes are de-duplicated and stored with the commit they were reviewed at. If new commits are pushed later, the PR page says so and offers to review them.
 
-The AI pass runs against a local Ollama server, so it's on when Relay runs on your machine and off on the hosted site. The AI findings in the demo were generated locally and saved; reviews started on the hosted site run the rule-based checks only.
+The AI pass runs against a local Ollama server, so it's on when Relay runs on your machine and off on the hosted site, where reviews run the rule-based checks only.
 
 ## Stack
 
@@ -84,4 +84,4 @@ GitHub Actions runs all of these plus a production build on every push and pull 
 
 ## The demo account
 
-The demo is read-only at two levels. The app blocks reviews, repository changes and GitHub connections for it, and the database blocks every write for workspaces marked `read_only` (see `supabase/migrations`). It reads GitHub with its own token that can only see the public [relay-demo](https://github.com/TamerYounes/relay-demo) repository, never a real user's connection.
+The demo is read-only at two levels. The app blocks reviews, repository changes and GitHub connections for it, and the database blocks every write for workspaces marked `read_only` (see `supabase/migrations`). It reads GitHub with its own token that can only see the public [Relay-demo](https://github.com/TamerYounes/Relay-demo) repository, never a real user's connection. That repository is a small storefront with open pull requests that have problems in them on purpose, plus one clean one.
