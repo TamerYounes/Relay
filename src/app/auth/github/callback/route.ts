@@ -1,39 +1,6 @@
 import { NextResponse } from "next/server";
-import crypto from "crypto";
 import { createClient } from "@/lib/supabase/server";
-
-function encryptToken(token: string) {
-  const keyHex = process.env.GITHUB_TOKEN_ENCRYPTION_KEY;
-
-  if (!keyHex) {
-    throw new Error("GitHub token encryption key is not configured.");
-  }
-
-  const key = Buffer.from(keyHex, "hex");
-
-  if (key.length !== 32) {
-    throw new Error(
-      "GITHUB_TOKEN_ENCRYPTION_KEY must be exactly 32 bytes (64 hex characters).",
-    );
-  }
-
-  const iv = crypto.randomBytes(12);
-
-  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
-
-  const encrypted = Buffer.concat([
-    cipher.update(token, "utf8"),
-    cipher.final(),
-  ]);
-
-  const authTag = cipher.getAuthTag();
-
-  return [
-    iv.toString("hex"),
-    authTag.toString("hex"),
-    encrypted.toString("hex"),
-  ].join(":");
-}
+import { encryptToken } from "@/lib/github/encryption";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
